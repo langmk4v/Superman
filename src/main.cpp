@@ -1,8 +1,6 @@
-#include "Application.hpp"
+// clang-format off
 
-namespace superman{
-  ObjNone* Object::none = new ObjNone( );
-}
+#include "Application.hpp"
 
 int main(int argc, char** argv) {
   return superman::Application().main(argc, argv);

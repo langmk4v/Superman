@@ -30,7 +30,7 @@ COMMONFLAGS		:=	$(INCLUDES) $(FLAGS_OPTIMIZE) $(FLAGS_WARN) $(foreach d,$(FLAGS_
 
 FLAGS_C			:=	$(COMMONFLAGS) -std=c17
 FLAGS_CXX		:=	$(COMMONFLAGS) -std=c++20
-FLAGS_LD		:=	-Wl,--gc-sections,-s
+FLAGS_LD		:=	-Wl,--gc-sections,-s -fuse=mold
 
 %.o: %$(EXT_ASM)
 	@echo "\e[1m\e[32mCOMPILE \e[37m$<\e[0m ..."
