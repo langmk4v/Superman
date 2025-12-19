@@ -1,0 +1,24 @@
+fn func -> string {
+  return "Hello, World!";
+}
+println(func());
+
+class MyClass < T: constructible_from<int> > {
+  pub var a : T;
+  
+  pub fn method_aaa(self) -> vector<T> {
+    return [a];
+  }
+
+  pub new {
+    self.a = new T(12345);
+  }
+}
+
+class MyClass_2 : MyClass <int> {
+  pub var xx;
+
+  pub new(x: vector<int>) {
+    self.xx = x;
+  }
+}
