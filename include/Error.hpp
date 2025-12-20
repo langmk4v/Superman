@@ -133,6 +133,14 @@ namespace superman {
       }
     };
 
+    struct too_few_arguments : e {
+      too_few_arguments(Token const& t) : e(t, "too few arguments") { }
+    };
+
+    struct too_many_arguments : e {
+      too_many_arguments(Token const& t) : e(t, "too many arguments") { }
+    };
+
   } // namespace err
 
   namespace warns {

@@ -32,9 +32,14 @@ namespace superman::sema {
 
         switch (S->kind) {
         case SymbolKind::Var: {
-          if (!S->var_info->is_type_deducted) {
+          if (!S->var_info->is_argument() && !S->var_info->is_type_deducted) {
             todoimpl;
           }
+
+          debug(
+          if(S->var_info->is_argument()) {
+            assert(S->var_info->is_type_deducted);
+          })
 
           sym->type = NdSymbol::Var;
           sym->is_global_var = S->var_info->is_global;
@@ -113,9 +118,9 @@ namespace superman::sema {
         }
 
         if (is_var_arg ? (calls < takes - 1) : (calls < takes)) {
-          todoimpl; // too few
+          throw err::too_few_arguments(cf->callee->token);
         } else if (!is_var_arg && calls > takes) {
-          todoimpl; // too many
+          throw err::too_many_arguments(cf->callee->token);
         }
       }
 

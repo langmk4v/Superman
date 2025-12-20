@@ -89,6 +89,8 @@ namespace superman::sema {
 
     std::set<Node*> assignments; // <-- Assign or Let
 
+    bool is_argument() const { return def_arg != nullptr; }
+
     VariableInfo() {}
   };
 
