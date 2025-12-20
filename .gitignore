@@ -2,6 +2,10 @@
 /release
 /.bak
 
+*.o
+*.d
+
 test.txt
 
 fire
+

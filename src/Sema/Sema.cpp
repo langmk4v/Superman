@@ -46,6 +46,9 @@ namespace superman::sema {
     return s;
   }
 
+  //
+  // UnnamedScope
+  //
   UnnamedScope::UnnamedScope(NdScope* scope, int var_offs, FunctionScope* fs)
       : ScopeContext(scope) {
     scope->scope_ptr = this;
@@ -72,6 +75,9 @@ namespace superman::sema {
     fs->local_var_count = std::max<int>(fs->local_var_count, var_offs);
   }
 
+  //
+  // FunctionScope
+  //
   FunctionScope::FunctionScope(NdFunction* func) : ScopeContext(func) {
     func->scope_ptr = this;
 
@@ -84,6 +90,9 @@ namespace superman::sema {
     body->parent = this;
   }
 
+  //
+  // ModuleScope
+  //
   ModuleScope::ModuleScope(NdModule* mod) : ScopeContext(mod) {
 
     mod->scope_ptr = this;
