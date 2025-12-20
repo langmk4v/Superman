@@ -104,6 +104,8 @@ namespace superman {
 
     bool is(NodeKind k) const { return kind == k; }
 
+    bool is_expr() const { return kind >= NodeKind::Mul && kind <= NodeKind::LogOr; }
+
     virtual ~Node() {}
 
   protected:
