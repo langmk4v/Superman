@@ -81,19 +81,25 @@ namespace superman {
     }
 
     NdValue* v = new NdValue(*cur);
+
     switch (cur->kind) {
-    case TK::Int:
-      v->obj = new ObjInt(std::stoll(cur->text));
-      cur++;
-      break;
+      case TokenKind::Int:
+        v->obj = new ObjInt(std::stoll(cur->text));
+        cur++;
+        break;
 
-    case TK::String:
-      v->obj = new ObjString(strings::to_utf16(cur->text));
-      cur++;
-      break;
+      case TokenKind::Float:
+        v->obj = new ObjFloat(std::stold(cur->text));
+        cur++;
+        break;
 
-    default:
-      throw err::invalid_syntax(*cur);
+      case TokenKind::String:
+        v->obj = new ObjString(strings::to_utf16(cur->text));
+        cur++;
+        break;
+
+      default:
+        throw err::invalid_syntax(*cur);
     }
 
     return v;
@@ -149,12 +155,10 @@ namespace superman {
     auto x = ps_unary();
     while (!is_end()) {
       auto op = cur;
-      if (eat("*"))
-        x = new NdExpr(NodeKind::Mul, *op, x, ps_unary());
-      else if (eat("/"))
-        x = new NdExpr(NodeKind::Div, *op, x, ps_unary());
-      else
-        break;
+
+      if (eat("*")) x = new NdExpr(NodeKind::Mul, *op, x, ps_unary());
+      else if (eat("/")) x = new NdExpr(NodeKind::Div, *op, x, ps_unary());
+      else break;
     }
     return x;
   }
@@ -163,12 +167,9 @@ namespace superman {
     auto x = ps_terms();
     while (!is_end()) {
       auto op = cur;
-      if (eat("+"))
-        x = new NdExpr(NodeKind::Add, *op, x, ps_terms());
-      else if (eat("-"))
-        x = new NdExpr(NodeKind::Sub, *op, x, ps_terms());
-      else
-        break;
+      if (eat("+")) x = new NdExpr(NodeKind::Add, *op, x, ps_terms());
+      else if (eat("-")) x = new NdExpr(NodeKind::Sub, *op, x, ps_terms());
+      else break;
     }
     return x;
   }
@@ -177,12 +178,9 @@ namespace superman {
     auto x = ps_add_sub();
     while (!is_end()) {
       auto op = cur;
-      if (eat("<<"))
-        x = new NdExpr(NodeKind::LShift, *op, x, ps_add_sub());
-      else if (eat(">>"))
-        x = new NdExpr(NodeKind::RShift, *op, x, ps_add_sub());
-      else
-        break;
+      if (eat("<<")) x = new NdExpr(NodeKind::LShift, *op, x, ps_add_sub());
+      else if (eat(">>")) x = new NdExpr(NodeKind::RShift, *op, x, ps_add_sub());
+      else break;
     }
     return x;
   }
@@ -191,16 +189,11 @@ namespace superman {
     auto x = ps_shift();
     while (!is_end()) {
       auto op = cur;
-      if (eat("<"))
-        x = new NdExpr(NodeKind::Bigger, *op, ps_shift(), x);
-      else if (eat(">"))
-        x = new NdExpr(NodeKind::Bigger, *op, x, ps_shift());
-      else if (eat("<="))
-        x = new NdExpr(NodeKind::BiggerOrEqual, *op, ps_shift(), x);
-      else if (eat(">="))
-        x = new NdExpr(NodeKind::BiggerOrEqual, *op, x, ps_shift());
-      else
-        break;
+      if (eat("<")) x = new NdExpr(NodeKind::Bigger, *op, ps_shift(), x);
+      else if (eat(">")) x = new NdExpr(NodeKind::BiggerOrEqual, *op, x, ps_shift());
+      else if (eat("<=")) x = new NdExpr(NodeKind::Bigger, *op, ps_shift(), x);
+      else if (eat(">=")) x = new NdExpr(NodeKind::BiggerOrEqual, *op, x, ps_shift());
+      else break;
     }
     return x;
   }
@@ -209,13 +202,9 @@ namespace superman {
     auto x = ps_compare();
     while (!is_end()) {
       auto op = cur;
-      if (eat("=="))
-        x = new NdExpr(NodeKind::Equal, *op, x, ps_compare());
-      else if (eat("!="))
-        x = new NdExpr(NodeKind::Not, *op, new NdExpr(NodeKind::Equal, *op, x, ps_compare()),
-                       nullptr);
-      else
-        break;
+      if (eat("==")) x = new NdExpr(NodeKind::Equal, *op, x, ps_compare());
+      else if (eat("!=")) x = new NdExpr(NodeKind::Not, *op, new NdExpr(NodeKind::Equal, *op, x, ps_compare()), nullptr);
+      else break;
     }
     return x;
   }
@@ -225,10 +214,8 @@ namespace superman {
 
     while (!is_end()) {
       auto op = cur;
-      if (eat("&"))
-        x = new NdExpr(NodeKind::BitAnd, *op, x, ps_equality());
-      else
-        break;
+      if (eat("&")) x = new NdExpr(NodeKind::BitAnd, *op, x, ps_equality());
+      else break;
     }
 
     return x;
@@ -239,10 +226,8 @@ namespace superman {
 
     while (!is_end()) {
       auto op = cur;
-      if (eat("^"))
-        x = new NdExpr(NodeKind::BitXor, *op, x, ps_bit_and());
-      else
-        break;
+      if (eat("^")) x = new NdExpr(NodeKind::BitXor, *op, x, ps_bit_and());
+      else break;
     }
 
     return x;
@@ -253,10 +238,8 @@ namespace superman {
 
     while (!is_end()) {
       auto op = cur;
-      if (eat("|"))
-        x = new NdExpr(NodeKind::BitOr, *op, x, ps_bit_xor());
-      else
-        break;
+      if (eat("|")) x = new NdExpr(NodeKind::BitOr, *op, x, ps_bit_xor());
+      else break;
     }
 
     return x;

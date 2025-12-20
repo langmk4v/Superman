@@ -124,7 +124,7 @@ namespace superman::sema {
       }
 
       for (int i = 0; i < std::min(calls, takes); i++) {
-        auto argtype = eval_expr(cf->args[i]).type;
+        TypeInfo argtype = eval_expr(cf->args[i]).type;
 
         if (!argtype.equals(callee.type.parameters[i + 1]))
           throw err::mismatched_types(cf->args[i]->token, callee.type.parameters[i + 1].to_string(), argtype.to_string());
@@ -146,49 +146,46 @@ namespace superman::sema {
       todoimpl;
     }
 
-    auto ex = node->as<NdExpr>();
+    NdExpr* ex = node->as<NdExpr>();
 
-    auto lhs_type = eval_expr(ex->lhs).type;
-    auto rhs_type = eval_expr(ex->rhs).type;
+    TypeInfo left = eval_expr(ex->lhs).type;
+    TypeInfo right = eval_expr(ex->rhs).type;
 
-    struct TypeRule {
-      TypeKind l, r;
-      char const* op;
-      TypeKind res;
-    };
+    std::string const ls = left.to_string();
+    std::string const rs = right.to_string();
 
-    static TypeRule const type_rules[] = {
-        {TypeKind::Int, TypeKind::Int, "+", TypeKind::Int},
-        {TypeKind::Int, TypeKind::Int, "-", TypeKind::Int},
-        {TypeKind::Int, TypeKind::Int, "*", TypeKind::Int},
-        {TypeKind::Int, TypeKind::Int, "/", TypeKind::Int},
-        {TypeKind::Float, TypeKind::Float, "+", TypeKind::Float},
-        {TypeKind::Float, TypeKind::Float, "-", TypeKind::Float},
-        {TypeKind::Float, TypeKind::Float, "*", TypeKind::Float},
-        {TypeKind::Float, TypeKind::Float, "/", TypeKind::Float},
-        {TypeKind::Int, TypeKind::Float, "+", TypeKind::Float},
-        {TypeKind::Int, TypeKind::Float, "-", TypeKind::Float},
-        {TypeKind::Int, TypeKind::Float, "*", TypeKind::Float},
-        {TypeKind::Int, TypeKind::Float, "/", TypeKind::Float},
-        {TypeKind::Float, TypeKind::Int, "+", TypeKind::Float},
-        {TypeKind::Float, TypeKind::Int, "-", TypeKind::Float},
-        {TypeKind::Float, TypeKind::Int, "*", TypeKind::Float},
-        {TypeKind::Float, TypeKind::Int, "/", TypeKind::Float},
-        {TypeKind::String, TypeKind::String, "+", TypeKind::String},
-        {TypeKind::String, TypeKind::Char, "+", TypeKind::String},
-        {TypeKind::Char, TypeKind::String, "+", TypeKind::String},
-        {TypeKind::String, TypeKind::Int, "*", TypeKind::String},
-        {TypeKind::Int, TypeKind::String, "*", TypeKind::String},
-        {TypeKind::Int, TypeKind::Int, "<<", TypeKind::Int},
-        {TypeKind::Int, TypeKind::Int, ">>", TypeKind::Int}};
+    switch (ex->kind) {
+      case NodeKind::Add:
+        if (left.is(TypeKind::String) && right.is(TypeKind::String))
+          return TypeKind::String;
 
-    for (auto const& rule : type_rules) {
-      if (rule.l == lhs_type.kind && rule.r == rhs_type.kind && rule.op == ex->token.text) {
-        return TypeInfo(rule.res);
-      }
+        break;
+
+      case NodeKind::Sub:
+        break;
+      
+      case NodeKind::Mul:
+        if ((left.is(TypeKind::Int) && right.is(TypeKind::String)) || (left.is(TypeKind::String) && right.is(TypeKind::Int)))
+          return TypeKind::String;
+
+        break;
+
+      case NodeKind::Div:
+        break;
+
+      case NodeKind::Mod:
+        if (left.is(TypeKind::Float) || right.is(TypeKind::Float))
+          goto error_calc;
+
+        break;
     }
 
-    throw err::use_of_invalid_operator(ex->token, lhs_type.to_string(), rhs_type.to_string());
+    if (left.is_numeric() && right.is_numeric()) {
+      return left.is(TypeKind::Float) || right.is(TypeKind::Float) ? TypeKind::Float : TypeKind::Int;
+    }
+
+  error_calc:
+    throw err::use_of_invalid_operator(ex->token, ls, rs);
   }
 
   //
