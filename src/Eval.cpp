@@ -86,6 +86,41 @@ namespace superman {
       todoimpl;
     }
 
+      using Ty = TypeKind;
+
+    case NodeKind::Add: {
+      auto [x, l, r] = get_expr_tu(node);
+
+      switch (l->type.kind) {
+      case Ty::Int:
+        l->as<ObjInt>()->val += r->as<ObjInt>()->val;
+        break;
+      case Ty::Float:
+        l->as<ObjFloat>()->val += r->as<ObjFloat>()->val;
+        break;
+      case Ty::String:
+        l->as<ObjString>()->val += r->as<ObjString>()->val;
+        break;
+      }
+
+      return l;
+    }
+
+    case NodeKind::Sub: {
+      auto [x, l, r] = get_expr_tu(node);
+
+      switch (l->type.kind) {
+      case Ty::Int:
+        l->as<ObjInt>()->val -= r->as<ObjInt>()->val;
+        break;
+      case Ty::Float:
+        l->as<ObjFloat>()->val -= r->as<ObjFloat>()->val;
+        break;
+      }
+
+      return l;
+    }
+
     default:
       todoimpl;
     }

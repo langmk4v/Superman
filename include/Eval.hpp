@@ -34,6 +34,11 @@ namespace superman {
 
     void add_global_var(NdLet*);
 
+    std::tuple<NdExpr*, Object*, Object*> get_expr_tu(Node* ndexpr) {
+      auto x = ndexpr->as<NdExpr>();
+      return std::make_tuple(x, eval_expr(x->lhs)->clone(), eval_expr(x->rhs));
+    }
+
   private:
     CallStack& cur_stack() { return *call_stack.back(); }
   };

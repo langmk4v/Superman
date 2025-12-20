@@ -109,6 +109,10 @@ namespace superman::sema {
 
       todoimpl;
     }
+
+    case NodeKind::Assign: {
+      todoimpl;
+    }
     }
 
     if (!node->is_expr()) {
