@@ -14,6 +14,18 @@ namespace superman {
     case TypeKind::Int:
       return std::to_string(as<ObjInt>()->val);
 
+    case TypeKind::Float:
+      return std::to_string(as<ObjFloat>()->val);
+
+    case TypeKind::Bool:
+      return as<ObjBool>()->val ? "true" : "false";
+
+    case TypeKind::Char:
+      return strings::to_utf8(std::u16string(1, as<ObjChar>()->val));
+
+    case TypeKind::String:
+      return strings::to_utf8(as<ObjString>()->val);
+
     default:
       todoimpl;
     }

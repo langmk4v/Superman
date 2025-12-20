@@ -26,7 +26,11 @@ FLAGS_OPTIMIZE	:=	-O3
 FLAGS_WARN		:=	-Wall -Wextra -Wno-switch
 FLAGS_DEFINE	:=
 
-COMMONFLAGS		:=	$(INCLUDES) $(FLAGS_OPTIMIZE) $(FLAGS_WARN) $(foreach d,$(FLAGS_DEFINE),-D$(d))
+COMMONFLAGS		:=	\
+	$(INCLUDES) \
+	$(FLAGS_OPTIMIZE) \
+	$(FLAGS_WARN) \
+	$(foreach d,$(FLAGS_DEFINE),-D$(d))
 
 FLAGS_C			:=	$(COMMONFLAGS) -std=c17
 FLAGS_CXX		:=	$(COMMONFLAGS) -std=c++20

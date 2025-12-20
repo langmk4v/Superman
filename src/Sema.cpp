@@ -46,21 +46,30 @@ namespace superman::sema {
     return s;
   }
 
-  UnnamedScope::UnnamedScope(NdScope* scope) : ScopeContext(scope) {
+  UnnamedScope::UnnamedScope(NdScope* scope, int var_offs, FunctionScope* fs)
+      : ScopeContext(scope) {
     scope->scope_ptr = this;
+
+    parent_fn = fs;
 
     for (auto item : scope->items) {
       if (item->is(NodeKind::Let)) {
-        variables.append(Symbol::new_var_symbol(item->as<NdLet>()));
+        auto let = item->as<NdLet>();
+        auto var = variables.append(Symbol::new_var_symbol(let));
+
+        var->var_info->offset = let->index = var_offs++;
+
         continue;
       }
 
       if (item->is(NodeKind::Scope)) {
-        auto sub = add_scope(new UnnamedScope(item->as<NdScope>()));
+        auto sub = add_scope(new UnnamedScope(item->as<NdScope>(), var_offs, fs));
         sub->parent = this;
         continue;
       }
     }
+
+    fs->local_var_count = std::max<int>(fs->local_var_count, var_offs);
   }
 
   FunctionScope::FunctionScope(NdFunction* func) : ScopeContext(func) {
@@ -70,7 +79,8 @@ namespace superman::sema {
       args.append(Symbol::new_arg_symbol(&arg));
     }
 
-    body = new UnnamedScope(func->body);
+    body = new UnnamedScope(func->body, 0, this);
+
     body->parent = this;
   }
 
@@ -78,10 +88,19 @@ namespace superman::sema {
 
     mod->scope_ptr = this;
 
+    int global_var_offs = 0;
+
     for (auto item : mod->items) {
       switch (item->kind) {
       case NodeKind::Let: {
-        variables.append(Symbol::new_var_symbol(item->as<NdLet>()));
+        auto let = item->as<NdLet>();
+        auto gv = variables.append(Symbol::new_var_symbol(let));
+
+        gv->var_info->is_global = true;
+        gv->var_info->offset = global_var_offs++;
+
+        let->index = gv->var_info->offset;
+
         break;
       }
 
@@ -131,9 +150,29 @@ namespace superman::sema {
       }
 
       if (result.count()) {
-        todoimpl;
+        auto S = result.matches[0];
+
+        sym->sym_target = S->node;
+
+        switch (S->kind) {
+        case SymbolKind::Var: {
+          if (!S->var_info->is_type_deducted) {
+            todoimpl;
+          }
+
+          sym->type = NdSymbol::Var;
+          sym->is_global_var = S->var_info->is_global;
+          sym->var_offset = S->var_info->offset;
+
+          return S->var_info->type;
+        }
+
+        default:
+          todoimpl;
+        }
       }
 
+      sym->type = NdSymbol::BuiltinFunc;
       sym->sym_target_bltin = result.blt_funcs[0];
 
       auto ti = TypeInfo(TypeKind::Function, sym->sym_target_bltin->arg_types, false, false);
@@ -161,6 +200,8 @@ namespace superman::sema {
 
       bool is_blt = callee.builtin_func != nullptr;
 
+      cf->blt_fn = callee.builtin_func;
+
       auto calls = (int)cf->args.size();
       auto takes = (int)callee.type.parameters.size() - 1;
 
@@ -184,6 +225,10 @@ namespace superman::sema {
         if (!argtype.equals(is_blt ? callee.builtin_func->arg_types[i] : TypeInfo(/*todo*/))) {
           todoimpl;
         }
+      }
+
+      for (int i = takes; i < calls; i++) {
+        eval_expr(cf->args[i]);
       }
 
       if (is_blt) return callee.builtin_func->result_type;
@@ -304,9 +349,7 @@ namespace superman::sema {
     return 0; // no needed.
   }
 
-  void Sema::analyze_full() {
-    check_module(root_scope);
-  }
+  void Sema::analyze_full() { check_module(root_scope); }
 
   void Sema::check_module(ModuleScope* mod) {
 
@@ -462,8 +505,6 @@ namespace superman::sema {
     }
   }
 
-  Sema::Sema(NdModule* mod) {
-    root_scope = new ModuleScope(mod);
-  }
+  Sema::Sema(NdModule* mod) { root_scope = new ModuleScope(mod); }
 
 } // namespace superman::sema

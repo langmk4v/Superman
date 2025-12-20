@@ -102,22 +102,17 @@ namespace superman {
       return static_cast<T*>(this);
     }
 
-    bool is(NodeKind k) const {
-      return kind == k;
-    }
+    bool is(NodeKind k) const { return kind == k; }
 
-    virtual ~Node() {
-    }
+    virtual ~Node() {}
 
   protected:
-    Node(NodeKind k, Token& t) : kind(k), token(t) {
-    }
+    Node(NodeKind k, Token& t) : kind(k), token(t) {}
   };
 
   struct NdValue : Node {
     Object* obj = nullptr;
-    NdValue(Token& t) : Node(NodeKind::Value, t) {
-    }
+    NdValue(Token& t) : Node(NodeKind::Value, t) {}
   };
 
   struct NdSymbol : Node {
@@ -129,6 +124,7 @@ namespace superman {
       Enumerator,
       Class,
       Module,
+      BuiltinFunc,
     };
 
     NameTypes type = Unknown;
@@ -143,45 +139,46 @@ namespace superman {
     bool is_const = false;          //
     NdSymbol* concept_nd = nullptr; // if type-name
 
-    NdSymbol(Token& t) : Node(NodeKind::Symbol, t), name(token) {
-    }
+    bool is_global_var = false; //
+    int var_offset = 0;         // if variable
 
-    bool is_single() const {
-      return !next;
-    }
+    NdSymbol(Token& t) : Node(NodeKind::Symbol, t), name(token) {}
+
+    bool is_single() const { return !next; }
   };
 
   struct NdNew : Node {
     NdSymbol* type;
     std::vector<Node*> args;
-    NdNew(Token& tok) : Node(NodeKind::New, tok) {
-    }
+    NdNew(Token& tok) : Node(NodeKind::New, tok) {}
   };
 
   struct NdArray : Node {
     std::vector<Node*> data;
-    NdArray(Token& t) : Node(NodeKind::Array, t) {
-    }
+    NdArray(Token& t) : Node(NodeKind::Array, t) {}
   };
 
   struct NdTuple : Node {
     std::vector<Node*> elems;
-    NdTuple(Token& t) : Node(NodeKind::Tuple, t) {
-    }
+    NdTuple(Token& t) : Node(NodeKind::Tuple, t) {}
   };
 
+  struct NdFunction;
   struct NdCallFunc : Node {
     Node* callee;
     std::vector<Node*> args;
-    NdCallFunc(Node* callee, Token& tok) : Node(NodeKind::CallFunc, tok), callee(callee) {
-    }
+
+    builtins::Function const* blt_fn = nullptr;
+
+    NdFunction* func_nd = nullptr;
+
+    NdCallFunc(Node* callee, Token& tok) : Node(NodeKind::CallFunc, tok), callee(callee) {}
   };
 
   struct NdExpr : Node {
     Node* lhs;
     Node* rhs;
-    NdExpr(NodeKind k, Token& op, Node* l, Node* r) : Node(k, op), lhs(l), rhs(r) {
-    }
+    NdExpr(NodeKind k, Token& op, Node* l, Node* r) : Node(k, op), lhs(l), rhs(r) {}
   };
 
   struct NdLet : Node {
@@ -192,51 +189,43 @@ namespace superman {
 
     bool is_pub = false; // when field
 
+    int index = 0;
+
     sema::VariableInfo* var_info_ptr = nullptr;
 
-    NdLet(Token& t, Token& name) : Node(NodeKind::Let, t), name(name) {
-    }
+    NdLet(Token& t, Token& name) : Node(NodeKind::Let, t), name(name) {}
   };
 
   struct NdIf : Node {
     Node* cond = nullptr;
     Node* thencode = nullptr;
     Node* elsecode = nullptr;
-    NdIf(Token& t) : Node(NodeKind::If, t) {
-    }
+    NdIf(Token& t) : Node(NodeKind::If, t) {}
   };
 
   struct NdReturn : Node {
     Node* expr = nullptr;
-    NdReturn(Token& t) : Node(NodeKind::Return, t) {
-    }
+    NdReturn(Token& t) : Node(NodeKind::Return, t) {}
   };
 
   struct NdBreakOrContinue : Node {
-    NdBreakOrContinue(NodeKind k, Token& t) : Node(k, t) {
-    }
+    NdBreakOrContinue(NodeKind k, Token& t) : Node(k, t) {}
   };
 
   struct NdScope : Node {
     std::vector<Node*> items;
-    NdScope(Token& t) : Node(NodeKind::Scope, t) {
-    }
+    NdScope(Token& t) : Node(NodeKind::Scope, t) {}
   };
 
   struct NdTemplatableBase : Node {
     std::vector<NdSymbol*> parameter_defs; // <T, U, ...>
 
-    int count() const {
-      return (int)parameter_defs.size();
-    }
+    int count() const { return (int)parameter_defs.size(); }
 
-    bool is_template() const {
-      return count() != 0;
-    }
+    bool is_template() const { return count() != 0; }
 
   protected:
-    NdTemplatableBase(NodeKind k, Token& t) : Node(k, t) {
-    }
+    NdTemplatableBase(NodeKind k, Token& t) : Node(k, t) {}
   };
 
   struct NdFunction : NdTemplatableBase {
@@ -246,8 +235,7 @@ namespace superman {
 
       sema::VariableInfo* var_info_ptr = nullptr;
 
-      Argument(Token& n, NdSymbol* type) : Node(NodeKind::FuncArgument, n), name(n), type(type) {
-      }
+      Argument(Token& n, NdSymbol* type) : Node(NodeKind::FuncArgument, n), name(n), type(type) {}
     };
 
     Token& name;
@@ -258,13 +246,11 @@ namespace superman {
     bool take_self = false; //
     bool is_pub = false;    // when method
 
-    NdFunction(Token& t, Token& name) : NdTemplatableBase(NodeKind::Function, t), name(name) {
-    }
+    NdFunction(Token& t, Token& name) : NdTemplatableBase(NodeKind::Function, t), name(name) {}
   };
 
   struct NdEnum : Node {
-    NdEnum(Token& t) : Node(NodeKind::Enum, t) {
-    }
+    NdEnum(Token& t) : Node(NodeKind::Enum, t) {}
   };
 
   struct NdClass : NdTemplatableBase {
@@ -276,8 +262,7 @@ namespace superman {
     NdFunction* m_new = nullptr;
     NdFunction* m_delete = nullptr;
 
-    NdClass(Token& tok, Token& name) : NdTemplatableBase(NodeKind::Class, tok), name(name) {
-    }
+    NdClass(Token& tok, Token& name) : NdTemplatableBase(NodeKind::Class, tok), name(name) {}
   };
 
   struct NdModule : Node {
@@ -286,7 +271,6 @@ namespace superman {
 
     NdFunction* main_fn = nullptr;
 
-    NdModule(Token& tok) : Node(NodeKind::Module, tok) {
-    }
+    NdModule(Token& tok) : Node(NodeKind::Module, tok) {}
   };
 } // namespace superman

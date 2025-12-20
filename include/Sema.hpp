@@ -40,13 +40,9 @@ namespace superman::sema {
 
     std::set<Node*> references;
 
-    bool has_scope() const {
-      return scope_ctx != nullptr;
-    }
+    bool has_scope() const { return scope_ctx != nullptr; }
 
-    bool is(SymbolKind k) const {
-      return kind == k;
-    }
+    bool is(SymbolKind k) const { return kind == k; }
 
     bool is_type_name() const {
       return is(SymbolKind::Enum) || is(SymbolKind::Class) || is(SymbolKind::TemplateParam);
@@ -56,8 +52,7 @@ namespace superman::sema {
 
     static Symbol* new_arg_symbol(NdFunction::Argument* arg);
 
-    Symbol(SymbolKind k, std::string const& n, Node* node) : kind(k), name(n), node(node) {
-    }
+    Symbol(SymbolKind k, std::string const& n, Node* node) : kind(k), name(n), node(node) {}
   };
 
   //
@@ -68,39 +63,33 @@ namespace superman::sema {
 
     std::vector<Symbol*> symbols;
 
-    Symbol*& append(Symbol* s) {
-      return symbols.emplace_back(s);
-    }
+    Symbol*& append(Symbol* s) { return symbols.emplace_back(s); }
 
     // iterators
-    auto begin() {
-      return symbols.begin();
-    }
-    auto end() {
-      return symbols.end();
-    }
-    auto begin() const {
-      return symbols.begin();
-    }
-    auto end() const {
-      return symbols.begin();
-    }
+    auto begin() { return symbols.begin(); }
+    auto begin() const { return symbols.begin(); }
+    auto end() { return symbols.end(); }
+    auto end() const { return symbols.end(); }
 
-    SymbolTable(SymbolTable* parent_tbl = nullptr) : parent_tbl(parent_tbl) {
-    }
+    auto size() const { return symbols.size(); }
+
+    SymbolTable(SymbolTable* parent_tbl = nullptr) : parent_tbl(parent_tbl) {}
   };
 
   struct VariableInfo {
     bool is_type_deducted = false;
     TypeInfo type;
 
+    int offset = 0;
+
+    bool is_global = false;
+
     NdLet* def_let = nullptr;
     NdFunction::Argument* def_arg = nullptr;
 
-    std::set<NdExpr*> assignments;
+    std::set<Node*> assignments; // <-- Assign or Let
 
-    VariableInfo() {
-    }
+    VariableInfo() {}
   };
 
   struct ScopeContext {
@@ -113,18 +102,15 @@ namespace superman::sema {
       return (T*)this;
     }
 
-    bool is(NodeKind k) const {
-      return node->kind == k;
-    }
+    bool is(NodeKind k) const { return node->kind == k; }
 
-    virtual size_t find_symbol(std::vector<Symbol*>&, std::string const&) const {
-      return 0;
-    }
+    virtual size_t find_symbol(std::vector<Symbol*>&, std::string const&) const { return 0; }
 
   protected:
-    ScopeContext(Node* node, ScopeContext* parent = nullptr) : node(node), parent(parent) {
-    }
+    ScopeContext(Node* node, ScopeContext* parent = nullptr) : node(node), parent(parent) {}
   };
+
+  struct FunctionScope;
 
   // UnnamedScope
   // 関数スコープ内の無名スコープ (NdScope)
@@ -132,6 +118,8 @@ namespace superman::sema {
     SymbolTable variables;
 
     std::vector<UnnamedScope*> subscopes;
+
+    FunctionScope* parent_fn = nullptr;
 
     UnnamedScope* add_scope(UnnamedScope* us) {
       us->parent = this;
@@ -145,7 +133,7 @@ namespace superman::sema {
       return out.size();
     }
 
-    UnnamedScope(NdScope* scope);
+    UnnamedScope(NdScope* scope, int var_offset, FunctionScope* fs);
   };
 
   //
@@ -154,6 +142,8 @@ namespace superman::sema {
     SymbolTable args;
     TypeInfo result_type;
     UnnamedScope* body = nullptr;
+
+    int local_var_count = 0;
 
     // 戻り値の型の管理フラグ
     // ・プログラムにて明示的に指定されている場合は specified = true
@@ -220,32 +210,18 @@ namespace superman::sema {
 
     std::vector<builtins::Function const*> blt_funcs;
 
-    auto begin() {
-      return matches.begin();
-    }
-    auto end() {
-      return matches.end();
-    }
+    auto begin() { return matches.begin(); }
+    auto end() { return matches.end(); }
 
-    bool empty() const {
-      return matches.empty();
-    }
+    bool empty() const { return matches.empty(); }
 
-    auto count() {
-      return matches.size();
-    }
+    auto count() { return matches.size(); }
 
-    Symbol* operator[](size_t i) {
-      return matches[i];
-    }
+    Symbol* operator[](size_t i) { return matches[i]; }
 
-    void remove(size_t at) {
-      matches.erase(begin() + at);
-    }
+    void remove(size_t at) { matches.erase(begin() + at); }
 
-    inline void remove(std::vector<Symbol*>::iterator it) {
-      matches.erase(it);
-    }
+    inline void remove(std::vector<Symbol*>::iterator it) { matches.erase(it); }
 
     //
     // 絞り込み
@@ -279,16 +255,11 @@ namespace superman::sema {
 
     builtins::Function const* builtin_func;
 
-    bool fail() const {
-      return !is_succeed;
-    }
+    bool fail() const { return !is_succeed; }
 
-    ExprTypeResult() {
-    }
+    ExprTypeResult() {}
 
-    ExprTypeResult(TypeInfo t) : type(std::move(t)) {
-      is_succeed = true;
-    }
+    ExprTypeResult(TypeInfo t) : type(std::move(t)) { is_succeed = true; }
   };
 
   class Sema {

@@ -11,23 +11,30 @@ namespace superman {
   class Evaluator {
 
     struct CallStack {
-      std::unordered_map<std::string, Object*> variables;
+      std::vector<Object*> variables;
+
+      CallStack(int vn);
+      ~CallStack();
     };
+
+    std::vector<Object*> globals;
 
     std::vector<CallStack*> call_stack;
 
   public:
-    Evaluator() {
-    }
+    Evaluator() {}
 
     void eval_stmt(Node* node);
 
     Object* eval_expr(Node* node);
 
-    CallStack& push_stack();
+    CallStack& push_stack(int var_count);
 
     void pop_stack();
 
+    void add_global_var(NdLet*);
+
   private:
+    CallStack& cur_stack() { return *call_stack.back(); }
   };
 } // namespace superman

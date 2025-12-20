@@ -80,11 +80,9 @@ namespace superman {
     }
   }
 
-  Application::Application() {
-  }
+  Application::Application() {}
 
-  Application::~Application() {
-  }
+  Application::~Application() {}
 
   int Application::main(int argc, char** argv) {
     for (int i = 1; i < argc; i++)
@@ -115,6 +113,12 @@ namespace superman {
         se.analyze_full();
 
         auto ev = Evaluator();
+
+        for (auto x : mod->items) {
+          if (x->is(NodeKind::Let)) ev.add_global_var(x->as<NdLet>());
+        }
+
+        ev.push_stack(mod->scope_ptr->as<sema::ModuleScope>()->variables.size());
 
         ev.eval_stmt(mod->main_fn->body);
 
