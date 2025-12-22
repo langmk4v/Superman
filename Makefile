@@ -11,9 +11,12 @@ BACKUP_FOLDER	:=	$(TOPDIR)/.bak
 
 INCLUDE_DIR		:=	include
 
-SOURCE_DIR		:=	src \
-					src/Driver \
-					src/Sema
+SOURCE_DIR		:=	\
+				src \
+				src/Driver \
+				src/Lexer \
+				src/Sema \
+				src/VM
 
 CC			:=	clang
 CXX			:=	clang++

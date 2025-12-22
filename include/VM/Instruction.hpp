@@ -1,7 +1,11 @@
 #pragma once
 
-#include "Parser/Node_fwd.hpp"
-#include "VM/Asm.hpp"
+#include <cstdint>
+#include <string>
+
+namespace fire::parser {
+  struct Node;
+}
 
 namespace fire::vm {
 
@@ -9,14 +13,19 @@ namespace fire::vm {
     OP_Nop,
     OP_Do,
     OP_Jmpz,
+    OP_Label,
   };
 
   struct Instruction {
     Operations op;
 
-    Node* expr = nullptr;
+    parser::Node* expr = nullptr;
 
-    Instruction* addr = nullptr; // for jump
+    size_t label_index = 0;
+
+    Instruction* addr = nullptr;
+
+    std::string to_string() const;
 
     Instruction(Operations op) : op(op) { }
   };

@@ -9,9 +9,15 @@ namespace fire {
   using std::string;
   using std::string_literals::operator""s;
 
+  namespace parser {
+    struct Node;
+  }
+
   namespace strings {
     std::string to_utf8(std::u16string const& s);
     std::u16string to_utf16(std::string const& s);
+
+    std::string node2s(parser::Node* node);
 
     template <typename... Args>
     std::string format(std::string const& fmt, Args&&... args) {

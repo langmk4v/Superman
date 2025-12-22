@@ -1,16 +1,32 @@
-#include "Sema/Sema.hpp"
-#include "VM/Interp/Interp.hpp"
 #include "Utils/macro.h"
+#include "Utils/Strings.hpp"
 
-namespace fire::vm::interp {
+#include "Sema/Sema.hpp"
 
-  using namespace lexer;
-  using namespace parser;
-  using namespace sema;
+#include "VM/Instruction.hpp"
+#include "VM/Compiler.hpp"
+
+#include "VM/Interp/Interp.hpp"
+#include "VM/Interp/Object.hpp"
+
+namespace fire {
+
+using namespace lexer;
+using namespace parser;
+using namespace sema;
+
+using vm::Instruction;
+
+namespace vm::interp {
 
   static auto get_expr_tu(Interp* i, Node* node) {
     auto x = node->as<NdExpr>();
     return std::make_tuple(x, i->eval_expr(x->lhs), i->eval_expr(x->rhs));
+  }
+
+  Interp::Interp(std::vector<Instruction>& prg)
+    : prg(prg)
+  {
   }
 
   Object* Interp::eval_expr(Node* node) {
@@ -159,5 +175,10 @@ namespace fire::vm::interp {
     return Object::none;
   }
 
+  void Interp::run() {
+
+  }
+
+}
 
 }

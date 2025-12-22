@@ -12,7 +12,7 @@ namespace fire::vm::interp {
     std::vector<Instruction>& prg;
 
   public:
-    Interp(std::vector<Instruction>& prg) : prg(prg) { }
+    Interp(std::vector<Instruction>& prg);
 
     Object* eval_expr(parser::Node* node);
 

@@ -15,6 +15,7 @@
 #include "Sema/Sema.hpp"
 
 #include "VM/Compiler.hpp"
+#include "VM/Instruction.hpp"
 #include "VM/Interp/Interp.hpp"
 
 #include "Driver/Driver.hpp"
@@ -24,73 +25,6 @@ namespace fire {
 
   using namespace parser;
   using namespace lexer;
-
-  static std::string node2s(Node* node) {
-    static int indent = 0;
-
-    auto ind = std::string(indent * 2, ' ');
-
-    if (!node) return "<null>";
-
-    switch (node->kind) {
-    case NodeKind::Value:
-      if (node->token.kind == TokenKind::Char) return "'" + node->token.text + "'";
-      if (node->token.kind == TokenKind::String) return "\"" + node->token.text + "\"";
-      return node->token.text;
-
-    case NodeKind::Symbol: {
-      auto x = node->as<NdSymbol>();
-      auto s = x->name.text;
-      if (x->te_args.size() >= 1) s += "<" + strings::join(", ", x->te_args, node2s) + ">";
-      if (x->next) s += "::" + node2s(x->next);
-      return s;
-    }
-
-    case NodeKind::CallFunc: {
-      auto x = node->as<NdCallFunc>();
-      return node2s(x->callee) + "(" + strings::join(", ", x->args, node2s) + ")";
-    }
-
-    case NodeKind::Scope: {
-      auto x = node->as<NdScope>();
-
-      indent++;
-      auto s = "{\n" + std::string(indent * 2, ' ');
-
-      s += strings::join("\n" + std::string(indent * 2, ' '), x->items, node2s);
-      s += "\n" + ind + "}";
-
-      indent--;
-      return s;
-    }
-
-    case NodeKind::Function: {
-      auto x = node->as<NdFunction>();
-
-      auto s = "fn " + x->name.text + " (" +
-               strings::join(", ", x->args,
-                             [](NdFunction::Argument const& arg) -> std::string {
-                               return arg.name.text + ": " + node2s(arg.type);
-                             }) +
-               ") -> " + node2s(x->result_type) + " " + node2s(x->body);
-
-      return s;
-    }
-
-    case NodeKind::Module: {
-      auto x = node->as<NdModule>();
-      return strings::join("\n", x->items, node2s);
-    }
-
-    case NodeKind::Return: {
-      auto x = node->as<NdReturn>();
-      return x->expr ? "return " + node2s(x->expr) + ";" : "return;";
-    }
-
-    default:
-      todoimpl;
-    }
-  }
 
   Driver::Driver() {}
 
@@ -111,7 +45,6 @@ namespace fire {
       try {
         auto lexer = Lexer(source);
         tokens = lexer.lex();
-        // for (auto&&t:tokens)std::cout<<t.text<<' ';std::cout<<std::endl;
 
         auto parser = Parser(lexer, tokens);
 
@@ -130,10 +63,18 @@ namespace fire {
           return -1;
         }
 
-        // std::cout << node2s(node) << std::endl;
-
         auto se = sema::Sema(mod);
         se.analyze_full();
+
+        std::vector<vm::Instruction> prg;
+
+        auto comp = vm::compiler::Compiler(prg);
+
+        comp.compile(mod);
+
+        auto runner = vm::interp::Interp(prg);
+
+        runner.run();
 
         return 0;
       } catch (int n) {

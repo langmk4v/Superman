@@ -3,7 +3,6 @@
 #include "VM/Interp/Object.hpp"
 
 namespace fire::vm::interp {
-
   ObjNone* Object::none = new ObjNone();
 
   std::string Object::to_string() const {
@@ -32,5 +31,4 @@ namespace fire::vm::interp {
 
     return "none";
   }
-
-} // namespace superman
+}

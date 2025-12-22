@@ -14,6 +14,8 @@ namespace fire::vm {
 
     class Compiler {
 
+      std::vector<Instruction>& out;
+
     public:
       Compiler(std::vector<Instruction>& out);
 
