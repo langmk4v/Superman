@@ -10,20 +10,27 @@ namespace fire::vm {
 
   struct Instruction;
 
-  namespace compiler {
+  class Compiler {
 
-    class Compiler {
+    std::vector<Instruction>& out;
 
-      std::vector<Instruction>& out;
+    size_t label_index = 0;
 
-    public:
-      Compiler(std::vector<Instruction>& out);
+  public:
+    Compiler(std::vector<Instruction>& out);
 
-      void compile(parser::Node* node);
+    void compile(parser::Node* node);
 
-    private:
+    debug(
+      void show_all();
+    )
 
-    };
+  private:
 
-  }
+    size_t emit(Instruction&& ins);
+
+    std::string get_label();
+
+  };
+
 }

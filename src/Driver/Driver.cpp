@@ -68,9 +68,15 @@ namespace fire {
 
         std::vector<vm::Instruction> prg;
 
-        auto comp = vm::compiler::Compiler(prg);
+        prg.push_back({ .op = vm::OP_Jmp, .label = "main" });
+
+        auto comp = vm::Compiler(prg);
 
         comp.compile(mod);
+
+        debug(
+          comp.show_all();
+        )
 
         auto runner = vm::interp::Interp(prg);
 

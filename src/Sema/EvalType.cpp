@@ -36,7 +36,6 @@ namespace fire::sema {
       if (result.empty()) {
 
         if(result.builtin_f) {
-          sym->type = NdSymbol::BuiltinFunc;
           sym->builtin_f = result.builtin_f;
 
           TypeInfo ti { TypeKind::Function, result.builtin_f->arg_types, false, false };
@@ -72,7 +71,6 @@ namespace fire::sema {
               assert(S->var_info->is_type_deducted);
           )
 
-          sym->type = NdSymbol::Var;
           sym->is_global_var = S->var_info->is_global;
           sym->var_offset = S->var_info->offset;
 
@@ -80,8 +78,6 @@ namespace fire::sema {
         }
 
         case SymbolKind::Func: {
-          sym->type = NdSymbol::Func;
-
           auto f = S->node->as<NdFunction>();
 
           assert(f->is(NodeKind::Function));
@@ -105,22 +101,11 @@ namespace fire::sema {
         }
       }
 
-      /*
-      sym->type = NdSymbol::BuiltinFunc;
-      sym->sym_target_bltin = result.blt_funcs[0];
-
-      auto ti = TypeInfo(TypeKind::Function, sym->sym_target_bltin->arg_types, false, false);
-
-      ti.parameters.insert(ti.parameters.begin(), sym->sym_target_bltin->result_type);
-
-      auto res = ExprType(node, ti);
-
-      res.builtin_func = sym->sym_target_bltin;
-
-      return res;
-      */
-
       todo;
+    }
+
+    case NodeKind::DeclType: {
+      throw err::semantics::cannot_use_decltype_here(node);
     }
 
     //
@@ -175,6 +160,14 @@ namespace fire::sema {
       return { node, callee.type.parameters[0] };
     }
 
+    case NodeKind::MemberAccess: {
+      auto x = node->as<NdExpr>();
+
+      auto inst = eval_expr(x->lhs);
+
+      todo;
+    }
+
     case NodeKind::New: {
       auto new_nd = node->as<NdNew>();
 
@@ -197,7 +190,16 @@ namespace fire::sema {
     }
 
     case NodeKind::Assign: {
-      todo;
+      auto as= node->as<NdExpr>();
+
+      auto left = eval_expr(as->lhs).type;
+      auto right = eval_expr(as->rhs).type;
+
+      if(!left.equals(right)){
+        throw err::semantics::not_same_type_assignment(as->token, left.to_string(), right.to_string());
+      }
+
+      return ExprType(node,left);
     }
     }
 

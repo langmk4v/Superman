@@ -146,6 +146,11 @@ namespace fire {
       struct this_is_not_typename : e {
         this_is_not_typename(Token const&t) : e(t, "'" + t.text+ "' is not type name") { }
       };
+
+      struct not_same_type_assignment : e {
+        not_same_type_assignment(Token const& t,std::string const& dest, std::string const& src)
+      :e(t,"cannot assignment to inequality type: '"+dest+"' <- '"+src+"'"){}
+      };
     }
 
   } // namespace err

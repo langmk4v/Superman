@@ -126,7 +126,16 @@ namespace fire::parser {
         x = new NdExpr(NodeKind::Subscript, *op, x, ps_expr());
         expect("]");
       } else if (eat(".")) {
-        x = new NdExpr(NodeKind::MemberAccess, *op, x, ps_factor());
+        auto right = ps_factor();
+
+        if(auto rr=right->as<NdCallFunc>();right->is(NodeKind::CallFunc)){
+          rr->is_method_call=true;
+          rr->inst_expr=x;
+          rr->args.insert(rr->args.begin(),x);
+          x=rr;
+        }
+        else
+          x = new NdExpr(NodeKind::MemberAccess, *op, x, right);
       } else
         break;
     }
@@ -405,6 +414,7 @@ namespace fire::parser {
           throw err::cannot_specify_return_type_of_constructor(*cur);
         }
         newfn->body = ps_scope();
+        node->m_new=newfn;
       } else if (eat("delete")) {
         todoimpl;
       } else {

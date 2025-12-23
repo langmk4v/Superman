@@ -28,6 +28,8 @@ namespace fire::parser {
 
     Symbol,
 
+    DeclType,
+
     Array,
     Tuple,
 
@@ -129,18 +131,6 @@ namespace fire::parser {
   // NdSymbol
   //
   struct NdSymbol : Node {
-    enum NameTypes {
-      Unknown,
-      Var,
-      Func,
-      Enum,
-      Enumerator,
-      Class,
-      Module,
-      BuiltinFunc,
-    };
-
-    NameTypes type = Unknown;
     Token& name;
     std::vector<NdSymbol*> te_args; // template-arguments
     NdSymbol* next = nullptr;       // scope-resolution
@@ -159,6 +149,11 @@ namespace fire::parser {
     NdSymbol(Token& t) : Node(NodeKind::Symbol, t), name(token) {}
 
     bool is_single() const { return !next; }
+  };
+
+  struct NdDeclType : Node {
+    Node* expr;
+    NdDeclType(Token& tok, Node* expr = nullptr) : Node(NodeKind::DeclType, tok), expr(expr) { }
   };
 
   struct NdNew : Node {
@@ -183,6 +178,11 @@ namespace fire::parser {
   struct NdCallFunc : Node {
     Node* callee;
     std::vector<Node*> args;
+
+    bool is_method_call = false;
+    Node* inst_expr =nullptr; // 'a' of "a.f()"
+
+    // inst_expr はあるが、args にも同じものを先頭に追加します
 
     NdFunction* func_nd = nullptr;
     vm::interp::BuiltinFunc const* builtin = nullptr;

@@ -39,6 +39,11 @@ namespace fire::strings {
       return node2s(x->callee) + "(" + strings::join(", ", x->args, node2s) + ")";
     }
 
+    case NodeKind::New: {
+      auto x = node->as<NdNew>();
+      return "new "+node2s(x->type)+"("+strings::join(", ",x->args,node2s)+")";
+    }
+
     case NodeKind::Scope: {
       auto x = node->as<NdScope>();
 
@@ -74,10 +79,14 @@ namespace fire::strings {
       auto x = node->as<NdReturn>();
       return x->expr ? "return " + node2s(x->expr) + ";" : "return;";
     }
-
-    default:
-      todo;
     }
+
+    if(node->is_expr()){
+      auto ex = node->as<NdExpr>();
+      return node2s(ex->lhs) + " " + ex->token.text + " " + node2s(ex->rhs);
+    }
+
+    return "???";
   }
 
 } // namespace superman::strings
