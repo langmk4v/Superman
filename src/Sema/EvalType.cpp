@@ -11,7 +11,7 @@ namespace fire::sema {
   using namespace lexer;
   using namespace parser;
 
-  using vm::interp::Sys;
+  using vm::interp::BuiltinFunc;
 
   //
   // eval_expr
@@ -31,10 +31,27 @@ namespace fire::sema {
     case NodeKind::Symbol: {
       auto sym = node->as<NdSymbol>();
 
-      auto result = find_symbol(sym);
+      SymbolFindResult result = find_symbol(sym);
 
-      if (result.empty())
+      if (result.empty()) {
+
+        if(result.builtin_f) {
+          sym->type = NdSymbol::BuiltinFunc;
+          sym->builtin_f = result.builtin_f;
+
+          TypeInfo ti { TypeKind::Function, result.builtin_f->arg_types, false, false };
+
+          ti.parameters.insert(ti.parameters.begin(), result.builtin_f->result_type);
+
+          ExprType res { node, std::move(ti) };
+
+          res.builtin_f = result.builtin_f;
+
+          return res;
+        }
+
         throw err::use_of_undefined_symbol(sym->name);
+      }
 
       if (result.count() >= 2)
         throw err::ambiguous_symbol_name(sym->name);
@@ -122,7 +139,7 @@ namespace fire::sema {
         throw err::not_callable_type(cf->callee->token, callee.type.to_string());
       }
 
-      bool is_blt = callee.builtin_func_id != Sys::None;
+      bool is_blt = callee.builtin_f != nullptr;
 
       if (callee.func_nd)
         cf->func_nd = callee.func_nd;
@@ -131,7 +148,7 @@ namespace fire::sema {
       auto takes = (int)callee.type.parameters.size() - 1;
 
       if (calls != takes) {
-        bool is_var_arg = is_blt && vm::interp::is_var_args_fn(callee.builtin_func_id);
+        bool is_var_arg = is_blt && callee.builtin_f->is_var_args;
 
         if (!is_var_arg) {
           // todo: get isvararg flag of user-def func

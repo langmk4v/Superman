@@ -1,18 +1,14 @@
 #pragma once
 
 #include <vector>
+
 #include "Lexer/Token.hpp"
-#include "VM/Interp/Sys.hpp"
+#include "VM/Interp/Builtins.hpp"
+#include "Sema/fwd.hpp"
 
 namespace fire {
   namespace lexer {
-    struct Token;
     struct SourceCode;
-  }
-
-  namespace sema {
-    struct ScopeContext;
-    struct VariableInfo;
   }
 
   namespace vm::interp {
@@ -151,9 +147,7 @@ namespace fire::parser {
 
     Node* sym_target = nullptr;
     
-    vm::interp::Sys builtin_f = vm::interp::Sys::None;
-
-    // builtins::Function const* sym_target_bltin = nullptr;
+    vm::interp::BuiltinFunc const* builtin_f = nullptr;
 
     bool is_ref = false;            //
     bool is_const = false;          //
@@ -191,7 +185,7 @@ namespace fire::parser {
     std::vector<Node*> args;
 
     NdFunction* func_nd = nullptr;
-    vm::interp::Sys builtin = vm::interp::Sys::None;
+    vm::interp::BuiltinFunc const* builtin = nullptr;
 
     bool is_builtin() const { return !func_nd; }
 

@@ -176,6 +176,7 @@ namespace vm::interp {
   }
 
   void Interp::run() {
+    (void)prg;
 
   }
 
