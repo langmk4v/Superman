@@ -42,7 +42,7 @@ namespace fire {
     }
 
     namespace interp {
-      enum class BuiltinFuncID : uint32_t; // ビルトイン関数の ID
+      struct BuiltinFunc; // ビルトイン関数
       struct Object;  // オブジェクト
       struct VCPU;    // Virtual CPU
       class Interp;   // インタプリタ ( Instruction の配列を実行する )
