@@ -41,14 +41,17 @@ namespace fire::parser {
 
   NdSymbol* Parser::ps_type_name() {
 
-    auto&tok=*cur;
+    Token& tok = *cur;
 
     if(eat("decltype")){
       expect("(");
-      auto x = new NdDeclType(tok,ps_expr());
+      auto x = new NdDeclType(tok, ps_expr());
       expect(")");
 
-      return new NdSymbol(x);
+      auto s = new NdSymbol(tok);
+      s->dec = x;
+
+      return s;
     }
 
     return ps_symbol(true);

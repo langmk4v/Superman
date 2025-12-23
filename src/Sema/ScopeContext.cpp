@@ -70,6 +70,7 @@ namespace fire::sema {
       method_new = new Symbol(SymbolKind::Func, "new", cla->m_new);
       method_new->fnscope = new FunctionScope(cla->m_new);
       method_new->fnscope->parent = this;
+      method_new->fnscope->is_method=true;
     }
 
     if (cla->m_delete) {

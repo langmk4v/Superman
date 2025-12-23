@@ -20,7 +20,11 @@
 
 namespace fire::sema {
 
-
+  TypeInfo Sema::make_class_type(NdClass*node){
+    TypeInfo ti{TypeKind::Class};
+    ti.class_node=node;
+    return ti;
+  }
 
   //
   // new_var_symbol

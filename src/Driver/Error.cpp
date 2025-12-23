@@ -18,19 +18,38 @@ namespace fire::err {
 
   e* e::print() {
     size_t begin = 0, end = s.get_len();
-    for (size_t i = pos; i > 0; i--)
-      if (s[i] == '\n') {
+
+    for (size_t i = 0; i <= pos; i++)
+      if (s[i] == '\n')
         begin = i + 1;
-        break;
-      }
+
     for (size_t i = pos; i < end; i++)
       if (s[i] == '\n') {
         end = i;
         break;
       }
-    printf("%s: %s\n -> %s:%zu:%zu\n  % 3d | %s\n      |%s^\n\n", tag, msg.c_str(), s.path.c_str(),
-           line, column, (int)line, s.data.substr(begin, end - begin).c_str(),
-           string(column, ' ').c_str());
+
+    std::string linenum_s = std::to_string(line);
+
+    printf(
+      COL_BOLD "%s: " COL_WHITE "%s\n" COL_DEFAULT
+      COL_LIGHT_GREEN " -> %s:%zu:%zu\n" COL_DEFAULT
+      " %s |\n"
+      " %s | %s\n"
+      " %s |%s^\n\n",
+      
+      tag,
+      msg.c_str(),
+      s.path.c_str(),
+      line,
+      column,
+      std::string(linenum_s.length(), ' ').c_str(),
+      linenum_s.c_str(),
+      s.data.substr(begin, end - begin).c_str(),
+      std::string(linenum_s.length(), ' ').c_str(),
+      string(column, ' ').c_str()
+    );
+
     return this;
   }
 

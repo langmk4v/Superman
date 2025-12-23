@@ -158,6 +158,14 @@ namespace fire {
       :e(t,"cannot assignment to inequality type: '"+dest+"' <- '"+src+"'"){}
       };
 
+      struct cannot_use_self_here:e{
+        cannot_use_self_here(Token const&t):e(t,"cannot use 'self' here."){}
+      };
+
+      struct cannot_use_self_in_not_class_method:e{
+        cannot_use_self_in_not_class_method(Token const&t):e(t,"cannot use 'self' in a function not-method or static."){}
+      };
+
     }
 
   } // namespace err

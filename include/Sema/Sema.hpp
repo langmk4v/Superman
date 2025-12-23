@@ -111,6 +111,8 @@ namespace fire::sema {
 
     ExprType eval_typename(NdSymbol* node);
 
+    TypeInfo make_class_type(NdClass*);
+
   private:
     SymbolFindResult find_symbol(NdSymbol* node);
 

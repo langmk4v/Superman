@@ -28,9 +28,12 @@ namespace fire::sema {
     case NodeKind::Self:{
       auto method = get_cur_func_scope();
 
-      if(!method){
+      if(!method)
         throw err::semantics::cannot_use_self_here(node->token);
-      }
+      else if( !method->is_method)
+        throw err::semantics::cannot_use_self_in_not_class_method(node->token);
+      
+      return { node, make_class_type(method->parent->node->as<NdClass>()) };
     }
 
     //
@@ -271,8 +274,15 @@ namespace fire::sema {
 
     ExprType result = ExprType(node);
 
-    if (node->dec){
-      return eval_expr(node->dec->expr);
+    if (node->dec) {
+      try {
+        return eval_expr(node->dec->expr);
+      }
+      catch (err::use_of_undefined_symbol e) {
+        e.print();
+        warns::show_note(node->dec->token, "expected an Expression in decltype(), not a type-name.")();
+        std::exit(1);
+      }
     }
 
     // 基本型の名前から探す
