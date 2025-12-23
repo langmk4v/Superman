@@ -61,6 +61,7 @@ namespace fire::sema {
 
       auto ctx = new FunctionScope(m);
       ctx->parent = this;
+      ctx->is_method = true;
 
       ms->scope_ctx = ctx;
     }

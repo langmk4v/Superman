@@ -63,6 +63,8 @@ namespace fire::sema {
 
     int local_var_count = 0;
 
+    bool is_method = false;
+
     // 戻り値の型の管理フラグ
     // ・プログラムにて明示的に指定されている場合は specified = true
     // ・そうでない場合に return 文から推論できた場合は deducted = true

@@ -40,12 +40,11 @@ namespace vm::interp {
     case NodeKind::Symbol: {
       auto sym = node->as<NdSymbol>();
 
-      switch (sym->type) {
-      case NdSymbol::Var:
+      if(sym->is_local_var){
         todo;
       }
 
-      todoimpl;
+      todo;
     }
 
     //
@@ -74,11 +73,7 @@ namespace vm::interp {
     // operator "new"
     //
     case NodeKind::New: {
-
-
-
-
-
+      auto x = node->as<NdNew>();
 
       todo;
     }

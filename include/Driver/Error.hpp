@@ -142,6 +142,12 @@ namespace fire {
       too_many_arguments(Token const& t) : e(t, "too many arguments") { }
     };
 
+    namespace parses {
+      struct cannot_use_decltype_here:e{
+        cannot_use_decltype_here(Token const&t):e(t,"cannot use decltype() here"){}
+      };
+    }
+
     namespace semantics {
       struct this_is_not_typename : e {
         this_is_not_typename(Token const&t) : e(t, "'" + t.text+ "' is not type name") { }
@@ -151,6 +157,7 @@ namespace fire {
         not_same_type_assignment(Token const& t,std::string const& dest, std::string const& src)
       :e(t,"cannot assignment to inequality type: '"+dest+"' <- '"+src+"'"){}
       };
+
     }
 
   } // namespace err

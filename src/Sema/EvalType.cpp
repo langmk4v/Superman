@@ -19,15 +19,23 @@ namespace fire::sema {
   ExprType Sema::eval_expr(Node* node) {
     switch (node->kind) {
 
-      //
-      // Value
-      //
+    //
+    // Value
+    //
     case NodeKind::Value:
       return { node, node->as<NdValue>()->obj->type };
 
-      //
-      // Symbol
-      //
+    case NodeKind::Self:{
+      auto method = get_cur_func_scope();
+
+      if(!method){
+        throw err::semantics::cannot_use_self_here(node->token);
+      }
+    }
+
+    //
+    // Symbol
+    //
     case NodeKind::Symbol: {
       auto sym = node->as<NdSymbol>();
 
@@ -71,7 +79,8 @@ namespace fire::sema {
               assert(S->var_info->is_type_deducted);
           )
 
-          sym->is_global_var = S->var_info->is_global;
+          (S->var_info->is_global ? sym->is_global_var : sym->is_local_var) = true;
+
           sym->var_offset = S->var_info->offset;
 
           return { node, S->var_info->type };
@@ -102,10 +111,6 @@ namespace fire::sema {
       }
 
       todo;
-    }
-
-    case NodeKind::DeclType: {
-      throw err::semantics::cannot_use_decltype_here(node);
     }
 
     //
@@ -265,6 +270,10 @@ namespace fire::sema {
     };
 
     ExprType result = ExprType(node);
+
+    if (node->dec){
+      return eval_expr(node->dec->expr);
+    }
 
     // 基本型の名前から探す
     for (auto&& [s, k] : name_kind_pairs)

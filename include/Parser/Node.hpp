@@ -28,6 +28,8 @@ namespace fire::parser {
 
     Symbol,
 
+    Self, // "self" keyword
+
     DeclType,
 
     Array,
@@ -127,11 +129,19 @@ namespace fire::parser {
     NdValue(Token& t) : Node(NodeKind::Value, t) {}
   };
 
+  struct NdDeclType : Node {
+    Node* expr;
+    NdDeclType(Token& tok, Node* expr = nullptr) : Node(NodeKind::DeclType, tok), expr(expr) { }
+  };
+
   //
   // NdSymbol
   //
   struct NdSymbol : Node {
     Token& name;
+
+    NdDeclType* dec=nullptr;
+
     std::vector<NdSymbol*> te_args; // template-arguments
     NdSymbol* next = nullptr;       // scope-resolution
 
@@ -143,17 +153,21 @@ namespace fire::parser {
     bool is_const = false;          //
     NdSymbol* concept_nd = nullptr; // if type-name
 
+    bool is_local_var=false;
     bool is_global_var = false; //
     int var_offset = 0;         // if variable
+
+    bool is_var()const{return is_local_var || is_global_var;}
+
+    NdSymbol(NdDeclType* de) : Node(NodeKind::Symbol, de->token), name(de->token), dec(de) { }
 
     NdSymbol(Token& t) : Node(NodeKind::Symbol, t), name(token) {}
 
     bool is_single() const { return !next; }
   };
 
-  struct NdDeclType : Node {
-    Node* expr;
-    NdDeclType(Token& tok, Node* expr = nullptr) : Node(NodeKind::DeclType, tok), expr(expr) { }
+  struct NdSelf : Node {
+    NdSelf(Token&t):Node(NodeKind::Self,t){}
   };
 
   struct NdNew : Node {

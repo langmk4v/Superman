@@ -40,11 +40,41 @@ namespace fire::parser {
   }
 
   NdSymbol* Parser::ps_type_name() {
+
+    auto&tok=*cur;
+
+    if(eat("decltype")){
+      expect("(");
+      auto x = new NdDeclType(tok,ps_expr());
+      expect(")");
+
+      return new NdSymbol(x);
+    }
+
     return ps_symbol(true);
   }
 
   Node* Parser::ps_factor() {
     auto& tok = *cur;
+
+    if(eat("self"))
+      return new NdSelf(tok);
+    
+    if(eat("true")){
+      auto v = new NdValue(tok);
+      v->obj=new vm::interp::ObjBool(true);
+      return v;
+    }
+
+    if(eat("false")){
+      auto v = new NdValue(tok);
+      v->obj=new vm::interp::ObjBool(false);
+      return v;
+    }
+
+    if(eat("decltype")){
+      throw err::parses::cannot_use_decltype_here(tok);
+    }
 
     if (eat("(")) {
       auto node = ps_expr();
