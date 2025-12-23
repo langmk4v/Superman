@@ -70,7 +70,7 @@ namespace fire::sema {
 
     if (result.empty()) {
       // find in builtin functions
-      
+
       size_t const count = std::size(vm::interp::builtin_func_table);
 
       for (size_t i = 0; i < count; i++){

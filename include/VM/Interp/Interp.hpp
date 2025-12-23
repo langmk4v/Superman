@@ -1,10 +1,19 @@
 #pragma once
 
 #include "Object.hpp"
-#include "VCPU.hpp"
 #include "Builtins.hpp"
 
+namespace fire::vm {
+  struct Instruction;
+}
+
 namespace fire::vm::interp {
+
+  struct VCPU {
+    size_t pc = 0;
+    bool result = false;
+    Instruction* lr = nullptr;
+  };
 
   class Interp {
 

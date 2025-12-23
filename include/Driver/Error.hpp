@@ -166,6 +166,23 @@ namespace fire {
         cannot_use_self_in_not_class_method(Token const&t):e(t,"cannot use 'self' in a function not-method or static."){}
       };
 
+      struct cannot_use_typename_here : e {
+        cannot_use_typename_here(Token const& t) : e(t, "cannot use type name here") { }
+      };
+
+      struct expected_expr_but_found : e {
+        expected_expr_but_found(Token const& t, std::string const& other)
+          : e(t, "expected an expression, but found " + other) { }
+      };
+
+      struct expected_class_type : e {
+        expected_class_type(Token const& tok) : e(tok, "expected class type") { }
+      };
+
+      struct not_field_of_class : e {
+        not_field_of_class(Token const& t,std::string const& Memb,std::string const& Clas)
+        :e(t,"'"+Memb+"' is not field of class '"+Clas+"'"){}
+      };
     }
 
   } // namespace err

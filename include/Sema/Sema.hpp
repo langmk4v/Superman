@@ -3,6 +3,8 @@
 #include "Sema/Symbol.hpp"
 #include "Sema/Scopes.hpp"
 
+#define BIT(_N) (1 << (_N))
+
 //
 // スコープコンテキストを主軸として処理をまわす
 //
@@ -46,7 +48,10 @@ namespace fire::sema {
 
     ExprType(Node* node = nullptr) : node(node) {}
 
-    ExprType(Node* node, TypeInfo t) : node(node), type(std::move(t)) { is_succeed = true; }
+    ExprType(Node* node, TypeInfo t) : node(node), type(std::move(t))
+    {
+      is_succeed = true;
+    }
   };
 
   struct SymbolFindResult {

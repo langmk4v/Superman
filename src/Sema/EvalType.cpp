@@ -26,14 +26,14 @@ namespace fire::sema {
       return { node, node->as<NdValue>()->obj->type };
 
     case NodeKind::Self:{
-      auto method = get_cur_func_scope();
+      auto method = this->get_cur_func_scope();
 
       if(!method)
         throw err::semantics::cannot_use_self_here(node->token);
       else if( !method->is_method)
         throw err::semantics::cannot_use_self_in_not_class_method(node->token);
       
-      return { node, make_class_type(method->parent->node->as<NdClass>()) };
+      return { node, this->make_class_type(method->parent->node->as<NdClass>()) };
     }
 
     //
@@ -171,9 +171,32 @@ namespace fire::sema {
     case NodeKind::MemberAccess: {
       auto x = node->as<NdExpr>();
 
-      auto inst = eval_expr(x->lhs);
+      assert(x->rhs->is(NodeKind::Symbol));
 
-      todo;
+      ExprType inst = eval_expr(x->lhs);
+
+      if (inst.type.kind != TypeKind::Class) {
+        throw err::semantics::expected_class_type(x->lhs->token);
+      }
+
+      NdClass* class_node = inst.type.class_node;
+
+      assert(class_node);
+
+      NdSymbol* right = x->rhs->as<NdSymbol>();
+
+      if(right->next){
+        // TODO: <基底クラス名> "::" <メンバ名>
+        todo;
+      }
+
+      for(NdLet*f:class_node->fields){
+        if(f->name.text == right->name.text){
+          return this->eval_typename(f->type);
+        }
+      }
+
+      throw err::semantics::not_field_of_class(right->token,);
     }
 
     case NodeKind::New: {
@@ -278,10 +301,11 @@ namespace fire::sema {
       try {
         return eval_expr(node->dec->expr);
       }
-      catch (err::use_of_undefined_symbol e) {
-        e.print();
-        warns::show_note(node->dec->token, "expected an Expression in decltype(), not a type-name.")();
-        std::exit(1);
+      catch (err::e e) {
+        if (node->dec->expr->is(NodeKind::Symbol) && eval_typename(node->dec->expr->as<NdSymbol>()).is_succeed)
+          throw err::semantics::expected_expr_but_found(node->dec->expr->token, "type-name");
+        else
+          throw e;
       }
     }
 
@@ -295,6 +319,7 @@ namespace fire::sema {
           throw err::no_match_template_arguments(node->name, C, N);
 
         // 存在したらユーザー定義型の検索はスキップ
+        result.is_succeed = true;
         return result;
       }
 
@@ -322,6 +347,8 @@ namespace fire::sema {
         
         result.type = TypeKind::Class;
         result.type.class_node = result.class_nd;
+
+        result.is_succeed = true;
 
         break;
       }

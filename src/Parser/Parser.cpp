@@ -167,8 +167,12 @@ namespace fire::parser {
           rr->args.insert(rr->args.begin(),x);
           x=rr;
         }
-        else
+        else {
+          if(right->kind!=NodeKind::Symbol){
+            throw err::invalid_syntax(*op);
+          }
           x = new NdExpr(NodeKind::MemberAccess, *op, x, right);
+        }
       } else
         break;
     }
