@@ -11,7 +11,7 @@ namespace fire::sema {
   using namespace lexer;
   using namespace parser;
 
-  using vm::interp::Sys;
+  using vm::interp::BuiltinFunc;
 
   //
   // eval_expr
@@ -19,22 +19,49 @@ namespace fire::sema {
   ExprType Sema::eval_expr(Node* node) {
     switch (node->kind) {
 
-      //
-      // Value
-      //
+    //
+    // Value
+    //
     case NodeKind::Value:
       return { node, node->as<NdValue>()->obj->type };
 
-      //
-      // Symbol
-      //
+    case NodeKind::Self:{
+      auto method = this->get_cur_func_scope();
+
+      if(!method)
+        throw err::semantics::cannot_use_self_here(node->token);
+      else if( !method->is_method)
+        throw err::semantics::cannot_use_self_in_not_class_method(node->token);
+      
+      return { node, this->make_class_type(method->parent->node->as<NdClass>()) };
+    }
+
+    //
+    // Symbol
+    //
     case NodeKind::Symbol: {
       auto sym = node->as<NdSymbol>();
 
-      auto result = find_symbol(sym);
+      SymbolFindResult result = find_symbol(sym);
 
-      if (result.empty())
+      if (result.empty()) {
+
+        if(result.builtin_f) {
+          sym->builtin_f = result.builtin_f;
+
+          TypeInfo ti { TypeKind::Function, result.builtin_f->arg_types, false, false };
+
+          ti.parameters.insert(ti.parameters.begin(), result.builtin_f->result_type);
+
+          ExprType res { node, std::move(ti) };
+
+          res.builtin_f = result.builtin_f;
+
+          return res;
+        }
+
         throw err::use_of_undefined_symbol(sym->name);
+      }
 
       if (result.count() >= 2)
         throw err::ambiguous_symbol_name(sym->name);
@@ -55,16 +82,14 @@ namespace fire::sema {
               assert(S->var_info->is_type_deducted);
           )
 
-          sym->type = NdSymbol::Var;
-          sym->is_global_var = S->var_info->is_global;
+          (S->var_info->is_global ? sym->is_global_var : sym->is_local_var) = true;
+
           sym->var_offset = S->var_info->offset;
 
           return { node, S->var_info->type };
         }
 
         case SymbolKind::Func: {
-          sym->type = NdSymbol::Func;
-
           auto f = S->node->as<NdFunction>();
 
           assert(f->is(NodeKind::Function));
@@ -88,21 +113,6 @@ namespace fire::sema {
         }
       }
 
-      /*
-      sym->type = NdSymbol::BuiltinFunc;
-      sym->sym_target_bltin = result.blt_funcs[0];
-
-      auto ti = TypeInfo(TypeKind::Function, sym->sym_target_bltin->arg_types, false, false);
-
-      ti.parameters.insert(ti.parameters.begin(), sym->sym_target_bltin->result_type);
-
-      auto res = ExprType(node, ti);
-
-      res.builtin_func = sym->sym_target_bltin;
-
-      return res;
-      */
-
       todo;
     }
 
@@ -122,7 +132,7 @@ namespace fire::sema {
         throw err::not_callable_type(cf->callee->token, callee.type.to_string());
       }
 
-      bool is_blt = callee.builtin_func_id != Sys::None;
+      bool is_blt = callee.builtin_f != nullptr;
 
       if (callee.func_nd)
         cf->func_nd = callee.func_nd;
@@ -131,7 +141,7 @@ namespace fire::sema {
       auto takes = (int)callee.type.parameters.size() - 1;
 
       if (calls != takes) {
-        bool is_var_arg = is_blt && vm::interp::is_var_args_fn(callee.builtin_func_id);
+        bool is_var_arg = is_blt && callee.builtin_f->is_var_args;
 
         if (!is_var_arg) {
           // todo: get isvararg flag of user-def func
@@ -158,6 +168,37 @@ namespace fire::sema {
       return { node, callee.type.parameters[0] };
     }
 
+    case NodeKind::MemberAccess: {
+      auto x = node->as<NdExpr>();
+
+      assert(x->rhs->is(NodeKind::Symbol));
+
+      ExprType inst = eval_expr(x->lhs);
+
+      if (inst.type.kind != TypeKind::Class) {
+        throw err::semantics::expected_class_type(x->lhs->token);
+      }
+
+      NdClass* class_node = inst.type.class_node;
+
+      assert(class_node);
+
+      NdSymbol* right = x->rhs->as<NdSymbol>();
+
+      if(right->next){
+        // TODO: <基底クラス名> "::" <メンバ名>
+        todo;
+      }
+
+      for(NdLet*f:class_node->fields){
+        if(f->name.text == right->name.text){
+          return this->eval_typename(f->type);
+        }
+      }
+
+      throw err::semantics::not_field_of_class(right->token,right->name.text,class_node->name.text);
+    }
+
     case NodeKind::New: {
       auto new_nd = node->as<NdNew>();
 
@@ -180,7 +221,16 @@ namespace fire::sema {
     }
 
     case NodeKind::Assign: {
-      todo;
+      auto as= node->as<NdExpr>();
+
+      auto left = eval_expr(as->lhs).type;
+      auto right = eval_expr(as->rhs).type;
+
+      if(!left.equals(right)){
+        throw err::semantics::not_same_type_assignment(as->token, left.to_string(), right.to_string());
+      }
+
+      return ExprType(node,left);
     }
     }
 
@@ -247,6 +297,18 @@ namespace fire::sema {
 
     ExprType result = ExprType(node);
 
+    if (node->dec) {
+      try {
+        return eval_expr(node->dec->expr);
+      }
+      catch (err::e e) {
+        if (node->dec->expr->is(NodeKind::Symbol) && eval_typename(node->dec->expr->as<NdSymbol>()).is_succeed)
+          throw err::semantics::expected_expr_but_found(node->dec->expr->token, "type-name");
+        else
+          throw e;
+      }
+    }
+
     // 基本型の名前から探す
     for (auto&& [s, k] : name_kind_pairs)
       if (node->name.text == s) {
@@ -257,6 +319,7 @@ namespace fire::sema {
           throw err::no_match_template_arguments(node->name, C, N);
 
         // 存在したらユーザー定義型の検索はスキップ
+        result.is_succeed = true;
         return result;
       }
 
@@ -284,6 +347,8 @@ namespace fire::sema {
         
         result.type = TypeKind::Class;
         result.type.class_node = result.class_nd;
+
+        result.is_succeed = true;
 
         break;
       }

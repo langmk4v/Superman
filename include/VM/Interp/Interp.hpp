@@ -1,10 +1,19 @@
 #pragma once
 
 #include "Object.hpp"
-#include "VCPU.hpp"
-#include "Sys.hpp"
+#include "Builtins.hpp"
+
+namespace fire::vm {
+  struct Instruction;
+}
 
 namespace fire::vm::interp {
+
+  struct VCPU {
+    size_t pc = 0;
+    bool result = false;
+    Instruction* lr = nullptr;
+  };
 
   class Interp {
 
@@ -16,7 +25,7 @@ namespace fire::vm::interp {
 
     Object* eval_expr(parser::Node* node);
 
-    Object* call_sys_func(Sys s, std::vector<Object*>& args);
+    // Object* exe_builtin_func(BuiltinFuncID s, std::vector<Object*>& args);
 
     void run();
 

@@ -40,11 +40,44 @@ namespace fire::parser {
   }
 
   NdSymbol* Parser::ps_type_name() {
+
+    Token& tok = *cur;
+
+    if(eat("decltype")){
+      expect("(");
+      auto x = new NdDeclType(tok, ps_expr());
+      expect(")");
+
+      auto s = new NdSymbol(tok);
+      s->dec = x;
+
+      return s;
+    }
+
     return ps_symbol(true);
   }
 
   Node* Parser::ps_factor() {
     auto& tok = *cur;
+
+    if(eat("self"))
+      return new NdSelf(tok);
+    
+    if(eat("true")){
+      auto v = new NdValue(tok);
+      v->obj=new vm::interp::ObjBool(true);
+      return v;
+    }
+
+    if(eat("false")){
+      auto v = new NdValue(tok);
+      v->obj=new vm::interp::ObjBool(false);
+      return v;
+    }
+
+    if(eat("decltype")){
+      throw err::parses::cannot_use_decltype_here(tok);
+    }
 
     if (eat("(")) {
       auto node = ps_expr();
@@ -126,7 +159,20 @@ namespace fire::parser {
         x = new NdExpr(NodeKind::Subscript, *op, x, ps_expr());
         expect("]");
       } else if (eat(".")) {
-        x = new NdExpr(NodeKind::MemberAccess, *op, x, ps_factor());
+        auto right = ps_factor();
+
+        if(auto rr=right->as<NdCallFunc>();right->is(NodeKind::CallFunc)){
+          rr->is_method_call=true;
+          rr->inst_expr=x;
+          rr->args.insert(rr->args.begin(),x);
+          x=rr;
+        }
+        else {
+          if(right->kind!=NodeKind::Symbol){
+            throw err::invalid_syntax(*op);
+          }
+          x = new NdExpr(NodeKind::MemberAccess, *op, x, right);
+        }
       } else
         break;
     }
@@ -405,6 +451,7 @@ namespace fire::parser {
           throw err::cannot_specify_return_type_of_constructor(*cur);
         }
         newfn->body = ps_scope();
+        node->m_new=newfn;
       } else if (eat("delete")) {
         todoimpl;
       } else {

@@ -15,7 +15,9 @@ SOURCE_DIR		:=	\
 				src \
 				src/Driver \
 				src/Lexer \
+				src/Parser \
 				src/Sema \
+				src/Utils \
 				src/VM
 
 CC			:=	clang

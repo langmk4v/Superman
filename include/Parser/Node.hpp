@@ -1,18 +1,14 @@
 #pragma once
 
 #include <vector>
+
 #include "Lexer/Token.hpp"
-#include "VM/Interp/Sys.hpp"
+#include "VM/Interp/Builtins.hpp"
+#include "Sema/fwd.hpp"
 
 namespace fire {
   namespace lexer {
-    struct Token;
     struct SourceCode;
-  }
-
-  namespace sema {
-    struct ScopeContext;
-    struct VariableInfo;
   }
 
   namespace vm::interp {
@@ -31,6 +27,10 @@ namespace fire::parser {
     Value,
 
     Symbol,
+
+    Self, // "self" keyword
+
+    DeclType,
 
     Array,
     Tuple,
@@ -116,7 +116,9 @@ namespace fire::parser {
 
     bool is(NodeKind k) const { return kind == k; }
 
-    bool is_expr() const { return kind >= NodeKind::Mul && kind <= NodeKind::LogOr; }
+    bool is_expr() const { return kind >= NodeKind::Mul && kind <= NodeKind::Assign; }
+
+    bool is_expr_full() const { return kind <= NodeKind::Assign; };
 
     virtual ~Node() {}
 
@@ -129,42 +131,45 @@ namespace fire::parser {
     NdValue(Token& t) : Node(NodeKind::Value, t) {}
   };
 
+  struct NdDeclType : Node {
+    Node* expr;
+    NdDeclType(Token& tok, Node* expr = nullptr) : Node(NodeKind::DeclType, tok), expr(expr) { }
+  };
+
   //
   // NdSymbol
   //
   struct NdSymbol : Node {
-    enum NameTypes {
-      Unknown,
-      Var,
-      Func,
-      Enum,
-      Enumerator,
-      Class,
-      Module,
-      BuiltinFunc,
-    };
-
-    NameTypes type = Unknown;
     Token& name;
+
+    NdDeclType* dec=nullptr;
+
     std::vector<NdSymbol*> te_args; // template-arguments
     NdSymbol* next = nullptr;       // scope-resolution
 
     Node* sym_target = nullptr;
     
-    vm::interp::Sys builtin_f = vm::interp::Sys::None;
-
-    // builtins::Function const* sym_target_bltin = nullptr;
+    vm::interp::BuiltinFunc const* builtin_f = nullptr;
 
     bool is_ref = false;            //
     bool is_const = false;          //
     NdSymbol* concept_nd = nullptr; // if type-name
 
+    bool is_local_var=false;
     bool is_global_var = false; //
     int var_offset = 0;         // if variable
+
+    bool is_var()const{return is_local_var || is_global_var;}
+
+    NdSymbol(NdDeclType* de) : Node(NodeKind::Symbol, de->token), name(de->token), dec(de) { }
 
     NdSymbol(Token& t) : Node(NodeKind::Symbol, t), name(token) {}
 
     bool is_single() const { return !next; }
+  };
+
+  struct NdSelf : Node {
+    NdSelf(Token&t):Node(NodeKind::Self,t){}
   };
 
   struct NdNew : Node {
@@ -190,8 +195,13 @@ namespace fire::parser {
     Node* callee;
     std::vector<Node*> args;
 
+    bool is_method_call = false;
+    Node* inst_expr =nullptr; // 'a' of "a.f()"
+
+    // inst_expr はあるが、args にも同じものを先頭に追加します
+
     NdFunction* func_nd = nullptr;
-    vm::interp::Sys builtin = vm::interp::Sys::None;
+    vm::interp::BuiltinFunc const* builtin = nullptr;
 
     bool is_builtin() const { return !func_nd; }
 

@@ -3,21 +3,28 @@
 #include "Utils/macro.h"
 #include "Utils/Strings.hpp"
 
-#include "VM/Interp/Object.hpp"
 #include "Parser/Node.hpp"
 #include "Driver/Error.hpp"
 #include "Sema/Sema.hpp"
+
+#include "VM/Interp/Object.hpp"
+#include "VM/Interp/Builtins.hpp"
 
 /*
  * ＠自分へ
  *  ソースコードみてわけわかんないときはコンサータ飲んでください。
  *  また途中放棄とかはしないでください。
+ *  コメントをときどき書いてください。
  *  宜しくお願いします。
  */
 
 namespace fire::sema {
 
-
+  TypeInfo Sema::make_class_type(NdClass*node){
+    TypeInfo ti{TypeKind::Class};
+    ti.class_node=node;
+    return ti;
+  }
 
   //
   // new_var_symbol
@@ -52,33 +59,45 @@ namespace fire::sema {
   // find_symbol
   //
   SymbolFindResult Sema::find_symbol(NdSymbol* node) {
-    auto r = SymbolFindResult();
-
-    (void)node;
+    SymbolFindResult result = SymbolFindResult();
 
     // find first symbol ( A of A::B::... )
-    for (auto scope = cur_scope; scope; scope = scope->parent) {
-      if (scope->find_symbol(r.matches, node->name.text) >= 1) {
+    for (ScopeContext* scope = cur_scope; scope; scope = scope->parent) {
+      if (scope->find_symbol(result.matches, node->name.text) >= 1) {
         break;
       }
     }
 
-    if (r.empty()) {
-      todo;
-      
+    if (result.empty()) {
       // find in builtin functions
-      // for (auto&& bf : builtins::Function::all_builtin_funcs)
-      //   if (bf->name == node->name.text) r.blt_funcs.push_back(bf);
 
-      // if (r.blt_funcs.empty()) return r;
+      size_t const count = std::size(vm::interp::builtin_func_table);
+
+      for (size_t i = 0; i < count; i++){
+        auto fn = vm::interp::builtin_func_table[i];
+
+        if(fn->name== node->name.text){
+          result.builtin_f = fn;
+          goto _found_builtin;
+        }
+      }
+
+      return result; 
     }
+
+  _found_builtin:;
 
     // loop for scope resolutions
     for (node = node->next; node; node = node->next) {
-      todoimpl;
+      
+      std::string const& name = node->name.text;
+
+      printd(name);
+
+      todo;
     }
 
-    return r;
+    return result;
   }
 
   //

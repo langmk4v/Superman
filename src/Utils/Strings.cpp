@@ -26,6 +26,9 @@ namespace fire::strings {
       if (node->token.kind == TokenKind::String) return "\"" + node->token.text + "\"";
       return node->token.text;
 
+    case NodeKind::Self:
+      return "self";
+
     case NodeKind::Symbol: {
       auto x = node->as<NdSymbol>();
       auto s = x->name.text;
@@ -37,6 +40,16 @@ namespace fire::strings {
     case NodeKind::CallFunc: {
       auto x = node->as<NdCallFunc>();
       return node2s(x->callee) + "(" + strings::join(", ", x->args, node2s) + ")";
+    }
+
+    case NodeKind::MemberAccess: {
+      auto x = node->as<NdExpr>();
+      return node2s(x->lhs)+"."+node2s(x->rhs);
+    }
+
+    case NodeKind::New: {
+      auto x = node->as<NdNew>();
+      return "new "+node2s(x->type)+"("+strings::join(", ",x->args,node2s)+")";
     }
 
     case NodeKind::Scope: {
@@ -74,10 +87,14 @@ namespace fire::strings {
       auto x = node->as<NdReturn>();
       return x->expr ? "return " + node2s(x->expr) + ";" : "return;";
     }
-
-    default:
-      todo;
     }
+
+    if(node->is_expr()){
+      auto ex = node->as<NdExpr>();
+      return node2s(ex->lhs) + " " + ex->token.text + " " + node2s(ex->rhs);
+    }
+
+    return "???";
   }
 
 } // namespace superman::strings
