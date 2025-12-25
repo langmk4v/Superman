@@ -9,7 +9,7 @@ BUILD_RELEASE	:=	release
 
 BACKUP_FOLDER	:=	$(TOPDIR)/.bak
 
-INCLUDE_DIR		:=	include
+INCLUDE_DIR		:=	include include/types include/classes
 
 SOURCE_DIR		:=	\
 				src \
@@ -28,7 +28,7 @@ EXT_C		:=	.c
 EXT_CXX		:=	.cpp
 
 FLAGS_OPTIMIZE	:=	-O3
-FLAGS_WARN		:=	-Wall -Wextra -Wno-switch
+FLAGS_WARN		:=	-Wall -Wextra -Wno-switch -Wno-unused-variable
 FLAGS_DEFINE	:=
 
 COMMONFLAGS		:=	\
@@ -111,6 +111,9 @@ restore:
 	else \
 		echo backup folder not found. \
 	fi
+
+copy:
+	./copy-bootstrap.sh
 
 else
 

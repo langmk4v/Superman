@@ -18,7 +18,7 @@ namespace fire {
     SourceCode* parent = nullptr;
     std::vector<SourceCode*> imports;
 
-    bool imported_nodes = false;
+    bool is_node_imported = false;
 
     SourceCode(std::string const& _path);
 

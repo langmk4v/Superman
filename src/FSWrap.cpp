@@ -3,11 +3,13 @@
 #include <sys/stat.h>
 #include <cstring>
 
-#include "FSWrap.hpp"
+#include "FileSystem.hpp"
 
 namespace fire {
 
-  void FileSystem::SetCwd(std::string const& path) { chdir(path.c_str()); }
+  void FileSystem::SetCwd(std::string const& path) {
+    chdir(path.c_str());
+  }
 
   std::string FileSystem::GetCwd() {
     char buf[PATH_MAX];

@@ -2,6 +2,11 @@ import Token;
 import SourceFile;
 
 namespace firec {
+    var lexer_punctuator_table : Array<(string, TokenPunctuators)> = [
+        ("+",   TokenPunctuators::Plus),
+        ("-",   TokenPunctuators::Minus)
+    ];
+
     class Lexer {
         var source: SourceFile;
         var pos: usize;
@@ -52,19 +57,36 @@ namespace firec {
             Todo(); // error
         }
 
-        fn find_punct(self) -> Option<(TokenPunctuators, string)> {
-            var static table : Array<(TokenPunctuators, string)> = [
-                (TokenPunctuators::Plus, "+"),
-                (TokenPunctuators::Minus, "-")
-            ];
-
-            for pair in table {
-                if self.eat(pair.second) {
-
+        fn find_punct(self) -> Option<(string, TokenPunctuators)> {
+            for pair in lexer_punctuator_table {
+                if self.eat(pair.0) {
+                    return pair;
                 }
             }
 
             return nullopt;
+        }
+
+        fn match(self, s: string) -> bool {
+            return self.pos + s.length() <= self.len && self.source.data[self.pos: self.pos + s.length()] == s;
+        }
+
+        fn eat(self, s: string) -> bool {
+            if self.match(s) {
+                self.pos += s.length();
+                return true;
+            }
+            return false;
+        }
+
+        fn pass_space(self) {
+            while !self.is_end() && self.peek().is_space() {
+                self.pos++;
+            }
+        }
+
+        fn is_end(self) -> bool {
+            return self.pos >= self.len;
         }
     }
 }

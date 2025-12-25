@@ -1,5 +1,4 @@
 import Lexer::Token;
-import Compiler::LowedNode;
 
 namespace firec {
     enum NodeKind {

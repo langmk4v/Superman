@@ -7,20 +7,21 @@
 #include "Lexer.hpp"
 #include "Token.hpp"
 #include "Parser.hpp"
-#include "Sema.hpp"
-#include "VM.hpp"
+#include "Sema/Sema.hpp"
 #include "Driver.hpp"
 #include "Error.hpp"
-
-#include "IR.hpp"
 
 namespace fire {
 
   Driver* __instance = nullptr;
 
-  Driver::Driver() { __instance = this; }
+  Driver::Driver() {
+    __instance = this;
+  }
 
-  Driver* Driver::get_instance() { return __instance; }
+  Driver* Driver::get_instance() {
+    return __instance;
+  }
 
   int Driver::main(int argc, char** argv) {
     this->cwd = std::filesystem::current_path().string();
@@ -52,17 +53,21 @@ namespace fire {
 
         Sema::analyze_all(mod);
 
-        if (!mod->main_fn->scope_ptr->as<FunctionScope>()->result_type.equals(TypeInfo(TypeKind::Int))) {
-          printf("fatal error: function 'main' must return an int.\n");
-          return -1;
-        }
+#ifdef _FIRE_DEBUG_
+        std::cout << node2s(mod) << std::endl;
+#endif
 
-        Compiler::compile_full(IR::from_node(mod));
+        // if
+        // (!mod->main_fn->scope_ptr->as<FunctionScope>()->result_type.equals(TypeInfo(TypeKind::Int)))
+        // {
+        //   printf("fatal error: function 'main' must return an int.\n");
+        //   return -1;
+        // }
+
+        // Compiler::compile_full(IR::from_node(mod));
 
         return 0;
-      } catch (int n) {
-        printf("%d\n", n);
-      } catch (err::e e) {
+      } catch (int n) { printf("%d\n", n); } catch (err::e e) {
         e.print();
       }
     }

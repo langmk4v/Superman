@@ -30,6 +30,8 @@ namespace fire {
     MemberAccess, // a.b
     CallFunc,     // a(...)
 
+    GetTupleElement, // a.0, a.1, ...
+
     Inclement, // ++a or a++
     Declement, // --a or a--
 
@@ -66,6 +68,8 @@ namespace fire {
     LogOr,
 
     Assign,
+
+    AssignWithOp, // +=, -=, ...
 
     // stmt ::= scope | if | for | break | continue | return
     //          | (expr ";")
@@ -108,9 +112,10 @@ namespace fire {
   struct NdFunction;
 
   //
-  // Sema.hpp
-  struct ScopeContext;
+  // in Sema
+  struct Symbol;
   struct VariableInfo;
+  struct Scope;
 
   struct Node {
     NodeKind kind;
@@ -118,40 +123,55 @@ namespace fire {
     Token token;
     std::string text;
 
-    ScopeContext* scope_ptr = nullptr;
+    Scope* scope_ptr = nullptr;
+
+    TypeInfo ty = {};
 
     template <typename T>
     T* as() {
       return static_cast<T*>(this);
     }
 
-    bool is(NodeKind k) const { return kind == k; }
+    bool is(NodeKind k) const {
+      return kind == k;
+    }
 
-    bool is_expr() const { return kind >= NodeKind::Mul && kind <= NodeKind::Assign; }
+    bool is_expr() const {
+      return kind >= NodeKind::Mul && kind <= NodeKind::Assign;
+    }
 
-    bool is_expr_full() const { return kind <= NodeKind::Assign; };
+    bool is_expr_full() const {
+      return kind <= NodeKind::Assign;
+    };
 
-    virtual ~Node() {}
+    virtual ~Node() {
+    }
 
   protected:
-    Node(NodeKind k, Token& t) : kind(k), token(t), text(t.text) {}
-    Node(NodeKind kind, std::string const& text) : kind(kind), text(text) {}
+    Node(NodeKind k, Token& t) : kind(k), token(t), text(t.text) {
+    }
+    Node(NodeKind kind, std::string const& text) : kind(kind), text(text) {
+    }
   };
 
   struct NdKeyValuePair : Node {
     Node* key;
     Node* value;
-    NdKeyValuePair(Token& t, Node* key, Node* value) : Node(NodeKind::KeyValuePair, t), key(key), value(value) {}
+    NdKeyValuePair(Token& t, Node* key, Node* value)
+        : Node(NodeKind::KeyValuePair, t), key(key), value(value) {
+    }
   };
 
   struct NdValue : Node {
     Object* obj = nullptr;
-    NdValue(Token& t) : Node(NodeKind::Value, t) {}
+    NdValue(Token& t) : Node(NodeKind::Value, t) {
+    }
   };
 
   struct NdDeclType : Node {
     Node* expr;
-    NdDeclType(Token& tok, Node* expr = nullptr) : Node(NodeKind::DeclType, tok), expr(expr) {}
+    NdDeclType(Token& tok, Node* expr = nullptr) : Node(NodeKind::DeclType, tok), expr(expr) {
+    }
   };
 
   //
@@ -163,7 +183,9 @@ namespace fire {
     NdDeclType* dec = nullptr;
 
     std::vector<NdSymbol*> te_args; // template-arguments
-    NdSymbol* next = nullptr;       // scope-resolution
+
+    Token* scope_resol_tok = nullptr;
+    NdSymbol* next = nullptr; // scope-resolution
 
     Node* sym_target = nullptr;
 
@@ -177,27 +199,38 @@ namespace fire {
     bool is_global_var = false; //
     int var_offset = 0;         // if variable
 
-    bool is_var() const { return is_local_var || is_global_var; }
+    Symbol* symbol_ptr = nullptr;
 
-    NdSymbol(NdDeclType* de) : Node(NodeKind::Symbol, de->token), name(de->token), dec(de) {}
+    bool is_var() const {
+      return is_local_var || is_global_var;
+    }
 
-    NdSymbol(Token& t) : Node(NodeKind::Symbol, t), name(token) {}
+    NdSymbol(NdDeclType* de) : Node(NodeKind::Symbol, de->token), name(de->token), dec(de) {
+    }
 
-    bool is_single() const { return !next; }
+    NdSymbol(Token& t) : Node(NodeKind::Symbol, t), name(token) {
+    }
+
+    bool is_single() const {
+      return !next;
+    }
   };
 
   struct NdSelf : Node {
-    NdSelf(Token& t) : Node(NodeKind::Self, t) {}
+    NdSelf(Token& t) : Node(NodeKind::Self, t) {
+    }
   };
 
   struct NdArray : Node {
     std::vector<Node*> data;
-    NdArray(Token& t) : Node(NodeKind::Array, t) {}
+    NdArray(Token& t) : Node(NodeKind::Array, t) {
+    }
   };
 
   struct NdTuple : Node {
     std::vector<Node*> elems;
-    NdTuple(Token& t) : Node(NodeKind::Tuple, t) {}
+    NdTuple(Token& t) : Node(NodeKind::Tuple, t) {
+    }
   };
 
   //
@@ -215,57 +248,85 @@ namespace fire {
     NdFunction* func_nd = nullptr;
     BuiltinFunc const* builtin = nullptr;
 
-    bool is_builtin() const { return !func_nd; }
+    bool is_builtin() const {
+      return !func_nd;
+    }
 
-    NdCallFunc(Node* callee, Token& tok) : Node(NodeKind::CallFunc, tok), callee(callee) {}
+    NdCallFunc(Node* callee, Token& tok) : Node(NodeKind::CallFunc, tok), callee(callee) {
+    }
+  };
+
+  struct NdGetTupleElement : Node {
+    Node* expr;
+    int index;
+    NdGetTupleElement(Token& tok, Node* expr, int index)
+        : Node(NodeKind::GetTupleElement, tok), expr(expr), index(index) {
+    }
   };
 
   struct NdInclement : Node {
     Node* expr = nullptr;
     bool is_postfix = false; // true: ++a, false: a++
     NdInclement(Token& tok, Node* expr, bool is_postfix)
-        : Node(NodeKind::Inclement, tok), expr(expr), is_postfix(is_postfix) {}
+        : Node(NodeKind::Inclement, tok), expr(expr), is_postfix(is_postfix) {
+    }
   };
 
   struct NdDeclement : Node {
     Node* expr = nullptr;
     bool is_postfix = false; // true: --a, false: a--
     NdDeclement(Token& tok, Node* expr, bool is_postfix)
-        : Node(NodeKind::Declement, tok), expr(expr), is_postfix(is_postfix) {}
+        : Node(NodeKind::Declement, tok), expr(expr), is_postfix(is_postfix) {
+    }
   };
 
   struct NdNew : Node {
     NdSymbol* type;
     std::vector<Node*> args;
-    NdNew(Token& tok) : Node(NodeKind::New, tok) {}
+    NdNew(Token& tok) : Node(NodeKind::New, tok) {
+    }
   };
 
   struct NdRef : Node {
     Node* expr = nullptr;
-    NdRef(Token& tok) : Node(NodeKind::Ref, tok) {}
+    NdRef(Token& tok) : Node(NodeKind::Ref, tok) {
+    }
   };
 
   struct NdDeref : Node {
     Node* expr = nullptr;
-    NdDeref(Token& tok) : Node(NodeKind::Deref, tok) {}
+    NdDeref(Token& tok) : Node(NodeKind::Deref, tok) {
+    }
   };
 
   // !a
   struct NdNot : Node {
     Node* expr = nullptr;
-    NdNot(Token& tok) : Node(NodeKind::Not, tok) {}
+    NdNot(Token& tok) : Node(NodeKind::Not, tok) {
+    }
   };
 
   // ~a
   struct NdBitNot : Node {
     Node* expr = nullptr;
-    NdBitNot(Token& tok) : Node(NodeKind::BitNot, tok) {}
+    NdBitNot(Token& tok) : Node(NodeKind::BitNot, tok) {
+    }
+  };
+
+  struct NdAssignWithOp : Node {
+    NodeKind opkind;
+    Node* lhs = nullptr;
+    Node* rhs = nullptr;
+    NdAssignWithOp(NodeKind opkind, Token& op, Node* l, Node* r)
+        : Node(NodeKind::AssignWithOp, op), opkind(opkind), lhs(l), rhs(r) {
+    }
   };
 
   struct NdExpr : Node {
     Node* lhs;
     Node* rhs;
-    NdExpr(NodeKind k, Token& op, Node* l, Node* r) : Node(k, op), lhs(l), rhs(r) {}
+    NdExpr(NodeKind k, Token& op, Node* l, Node* r) : Node(k, op), lhs(l), rhs(r) {
+    }
   };
 
   struct NdLet : Node {
@@ -282,25 +343,28 @@ namespace fire {
 
     int index = 0;
 
-    VariableInfo* var_info_ptr = nullptr;
+    Symbol* symbol_ptr = nullptr;
 
-    NdLet(Token& t, Token& name) : Node(NodeKind::Let, t), name(name) {}
+    NdLet(Token& t, Token& name) : Node(NodeKind::Let, t), name(name) {
+    }
   };
 
   struct NdScope;
 
   struct NdCatch : Node {
-    Token name;
+    Token holder;
     NdSymbol* error_type = nullptr;
     NdScope* body = nullptr;
-    NdCatch(Token& t) : Node(NodeKind::Catch, t) {}
+    NdCatch(Token& t) : Node(NodeKind::Catch, t) {
+    }
   };
 
   struct NdTry : Node {
     NdScope* body = nullptr;
     std::vector<NdCatch*> catches;
     NdScope* finally_block = nullptr;
-    NdTry(Token& t) : Node(NodeKind::Try, t) {}
+    NdTry(Token& t) : Node(NodeKind::Try, t) {
+    }
   };
 
   struct NdIf : Node {
@@ -308,46 +372,57 @@ namespace fire {
     Node* cond = nullptr;
     Node* thencode = nullptr;
     Node* elsecode = nullptr;
-    NdIf(Token& t) : Node(NodeKind::If, t) {}
+    NdIf(Token& t) : Node(NodeKind::If, t) {
+    }
   };
 
   struct NdFor : Node {
     Token iter;
     Node* iterable = nullptr;
     NdScope* body = nullptr;
-    NdFor(Token& t) : Node(NodeKind::For, t) {}
+    NdFor(Token& t) : Node(NodeKind::For, t) {
+    }
   };
 
   struct NdWhile : Node {
     NdLet* vardef = nullptr;
     Node* cond = nullptr;
     NdScope* body = nullptr;
-    NdWhile(Token& t) : Node(NodeKind::While, t) {}
+    NdWhile(Token& t) : Node(NodeKind::While, t) {
+    }
   };
 
   struct NdReturn : Node {
     Node* expr = nullptr;
-    NdReturn(Token& t) : Node(NodeKind::Return, t) {}
+    NdReturn(Token& t) : Node(NodeKind::Return, t) {
+    }
   };
 
   struct NdBreakOrContinue : Node {
-    NdBreakOrContinue(NodeKind k, Token& t) : Node(k, t) {}
+    NdBreakOrContinue(NodeKind k, Token& t) : Node(k, t) {
+    }
   };
 
   struct NdScope : Node {
     std::vector<Node*> items;
-    NdScope(Token& t) : Node(NodeKind::Scope, t) {}
+    NdScope(Token& t) : Node(NodeKind::Scope, t) {
+    }
   };
 
   struct NdTemplatableBase : Node {
     std::vector<NdSymbol*> parameter_defs; // <T, U, ...>
 
-    int count() const { return (int)parameter_defs.size(); }
+    int count() const {
+      return (int)parameter_defs.size();
+    }
 
-    bool is_template() const { return count() != 0; }
+    bool is_template() const {
+      return count() != 0;
+    }
 
   protected:
-    NdTemplatableBase(NodeKind k, Token& t) : Node(k, t) {}
+    NdTemplatableBase(NodeKind k, Token& t) : Node(k, t) {
+    }
   };
 
   struct NdFunction : NdTemplatableBase {
@@ -357,7 +432,8 @@ namespace fire {
 
       VariableInfo* var_info_ptr = nullptr;
 
-      Argument(Token& n, NdSymbol* type) : Node(NodeKind::FuncArgument, n), name(n), type(type) {}
+      Argument(Token& n, NdSymbol* type) : Node(NodeKind::FuncArgument, n), name(n), type(type) {
+      }
     };
 
     Token& name;
@@ -368,7 +444,8 @@ namespace fire {
     bool take_self = false; //
     bool is_pub = false;    // when method
 
-    NdFunction(Token& t, Token& name) : NdTemplatableBase(NodeKind::Function, t), name(name) {}
+    NdFunction(Token& t, Token& name) : NdTemplatableBase(NodeKind::Function, t), name(name) {
+    }
   };
 
   struct __attribute__((packed)) NdEnumeratorDef : Node {
@@ -381,13 +458,15 @@ namespace fire {
     bool is_type_names : 1 = false;    // Kind(T, U, ...)  -->  multiple< NdSymbol >
     bool is_struct_fields : 1 = false; // Kind(a: T, ...)  -->  multiple< NdKeyValuePair >
 
-    NdEnumeratorDef(Token& t) : Node(NodeKind::EnumeratorDef, t) {}
+    NdEnumeratorDef(Token& t) : Node(NodeKind::EnumeratorDef, t) {
+    }
   };
 
   struct NdEnum : Node {
     Token name;
     std::vector<NdEnumeratorDef*> enumerators;
-    NdEnum(Token& t) : Node(NodeKind::Enum, t) {}
+    NdEnum(Token& t) : Node(NodeKind::Enum, t) {
+    }
   };
 
   struct NdClass : NdTemplatableBase {
@@ -399,14 +478,16 @@ namespace fire {
     NdFunction* m_new = nullptr;
     NdFunction* m_delete = nullptr;
 
-    NdClass(Token& tok, Token& name) : NdTemplatableBase(NodeKind::Class, tok), name(name) {}
+    NdClass(Token& tok, Token& name) : NdTemplatableBase(NodeKind::Class, tok), name(name) {
+    }
   };
 
   struct NdNamespace : Node {
     std::string name;
     std::vector<Node*> items;
 
-    NdNamespace(Token& tok, std::string const& name) : Node(NodeKind::Namespace, tok), name(name) {}
+    NdNamespace(Token& tok, std::string const& name) : Node(NodeKind::Namespace, tok), name(name) {
+    }
   };
 
   struct NdModule : Node {
@@ -415,6 +496,7 @@ namespace fire {
 
     NdFunction* main_fn = nullptr;
 
-    NdModule(Token& tok) : Node(NodeKind::Module, tok) {}
+    NdModule(Token& tok) : Node(NodeKind::Module, tok) {
+    }
   };
 } // namespace fire

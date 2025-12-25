@@ -1,95 +1,262 @@
+#include <sstream>
+#include <codecvt>
+#include <locale>
+
 #include "Utils.hpp"
 #include "Node.hpp"
+#include "Sema/Sema.hpp"
 
 namespace fire {
 
+  using std::string_literals::operator""s;
+  using string = std::string;
+
   static std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> conv;
 
-  std::string to_utf8(std::u16string const& s) { return conv.to_bytes(s); }
+  std::string to_utf8(std::u16string const& s) {
+    return conv.to_bytes(s);
+  }
 
-  std::u16string to_utf16(std::string const& s) { return conv.from_bytes(s); }
+  std::u16string to_utf16(std::string const& s) {
+    return conv.from_bytes(s);
+  }
+
+  static std::string template_params_2s(NdTemplatableBase* tpbase) {
+    if (tpbase->count() == 0) { return ""; }
+
+    std::stringstream ss;
+    ss << " <" << join(", ", tpbase->parameter_defs, node2s) << "> ";
+    return ss.str();
+  }
 
   std::string node2s(Node* node) {
     static int indent = 0;
 
-    auto ind = std::string(indent * 2, ' ');
+    if (!node) return "";
 
-    if (!node) return "<null>";
+    std::string const ind(indent * 2, ' ');
 
     switch (node->kind) {
-    case NodeKind::Value:
-      if (node->token.kind == TokenKind::Char) return "'" + node->token.text + "'";
-      if (node->token.kind == TokenKind::String) return "\"" + node->token.text + "\"";
-      return node->token.text;
 
-    case NodeKind::Self:
-      return "self";
+      case NodeKind::Self:
+        return "self";
 
-    case NodeKind::Symbol: {
-      auto x = node->as<NdSymbol>();
-      auto s = x->name.text;
-      if (x->te_args.size() >= 1) s += "<" + join(", ", x->te_args, node2s) + ">";
-      if (x->next) s += "::" + node2s(x->next);
-      return s;
-    }
+      case NodeKind::Value: {
+        std::stringstream ss;
+        if (node->token.kind == TokenKind::Char) {
+          ss << "'" << node->token.text << "'";
+        } else if (node->token.kind == TokenKind::String) {
+          ss << "\"" << node->token.text << "\"";
+        } else {
+          ss << node->token.text;
+        }
+        return ss.str();
+      }
 
-    case NodeKind::CallFunc: {
-      auto x = node->as<NdCallFunc>();
-      return node2s(x->callee) + "(" + join(", ", x->args, node2s) + ")";
-    }
+      case NodeKind::Symbol: {
+        auto x = node->as<NdSymbol>();
+        std::stringstream ss;
 
-    case NodeKind::MemberAccess: {
-      auto x = node->as<NdExpr>();
-      return node2s(x->lhs) + "." + node2s(x->rhs);
-    }
+        ss << x->name.text;
 
-    case NodeKind::New: {
-      auto x = node->as<NdNew>();
-      return "new " + node2s(x->type) + "(" + join(", ", x->args, node2s) + ")";
-    }
+        if (!x->te_args.empty()) { ss << "<" << join(", ", x->te_args, node2s) << ">"; }
+        if (x->next) { ss << "::" << node2s(x->next); }
+        return ss.str();
+      }
 
-    case NodeKind::Scope: {
-      auto x = node->as<NdScope>();
+      case NodeKind::KeyValuePair: {
+        auto x = node->as<NdExpr>();
+        std::stringstream ss;
+        ss << node2s(x->lhs) << ": " << node2s(x->rhs);
+        return ss.str();
+      }
 
-      indent++;
-      auto s = "{\n" + std::string(indent * 2, ' ');
+      case NodeKind::Array: {
+        auto x = node->as<NdArray>();
+        std::stringstream ss;
+        ss << "[" << join(", ", x->data, node2s) << "]";
+        return ss.str();
+      }
 
-      s += join("\n" + std::string(indent * 2, ' '), x->items, node2s);
-      s += "\n" + ind + "}";
+      case NodeKind::Tuple: {
+        auto x = node->as<NdTuple>();
+        std::stringstream ss;
+        ss << "(" << join(", ", x->elems, node2s) << ")";
+        return ss.str();
+      }
 
-      indent--;
-      return s;
-    }
+      case NodeKind::CallFunc: {
+        auto x = node->as<NdCallFunc>();
+        std::stringstream ss;
+        ss << node2s(x->callee) << "(" << join(", ", x->args, node2s) << ")";
+        return ss.str();
+      }
 
-    case NodeKind::Function: {
-      auto x = node->as<NdFunction>();
+      case NodeKind::MemberAccess: {
+        auto x = node->as<NdExpr>();
+        std::stringstream ss;
+        ss << node2s(x->lhs) << "." << node2s(x->rhs);
+        return ss.str();
+      }
 
-      auto s =
-          "fn " + x->name.text + " (" +
-          join(", ", x->args,
-               [](NdFunction::Argument const& arg) -> std::string { return arg.name.text + ": " + node2s(arg.type); }) +
-          ") -> " + node2s(x->result_type) + " " + node2s(x->body);
+      case NodeKind::New: {
+        auto x = node->as<NdNew>();
+        std::stringstream ss;
+        ss << "new " << node2s(x->type) << "(" << join(", ", x->args, node2s) << ")";
+        return ss.str();
+      }
 
-      return s;
-    }
+      case NodeKind::Not: {
+      }
 
-    case NodeKind::Module: {
-      auto x = node->as<NdModule>();
-      return join("\n", x->items, node2s);
-    }
+      case NodeKind::Ref:
+        return "&" + node2s(node->as<NdRef>()->expr);
 
-    case NodeKind::Return: {
-      auto x = node->as<NdReturn>();
-      return x->expr ? "return " + node2s(x->expr) + ";" : "return;";
-    }
+      case NodeKind::Deref:
+        return "*" + node2s(node->as<NdDeref>()->expr);
+
+      case NodeKind::Scope: {
+        auto x = node->as<NdScope>();
+        indent++;
+
+        std::stringstream ss;
+        ss << "{";
+
+        for (auto y : x->items) {
+          ss << "\n  " << ind << node2s(y);
+          if (y->is_expr_full()) ss << ";";
+        }
+
+        ss << "\n" << ind << "}";
+
+        indent--;
+        return ss.str();
+      }
+
+      case NodeKind::Let: {
+        auto x = node->as<NdLet>();
+        std::stringstream ss;
+        ss << "var ";
+        if (x->placeholders.size() >= 1) {
+          ss << "(" << join(", ", x->placeholders, [](Token* t) { return t->text; }) << ")";
+        } else
+          ss << x->name.text;
+        if (x->type) { ss << " : " << node2s(x->type); }
+        if (x->init) { ss << " = " << node2s(x->init); }
+        ss << ";";
+        return ss.str();
+      }
+
+      case NodeKind::If: {
+        auto x = node->as<NdIf>();
+        std::stringstream ss;
+        ss << "if " << node2s(x->vardef) << node2s(x->cond) << " " << node2s(x->thencode);
+        if (x->elsecode) ss << "\n" << ind << "else " << node2s(x->elsecode);
+        return ss.str();
+      }
+
+      case NodeKind::For: {
+        auto x = node->as<NdFor>();
+        std::stringstream ss;
+        ss << "for " << x->iter.text << " " << node2s(x->iterable) << " " << node2s(x->body);
+        return ss.str();
+      }
+
+      case NodeKind::While: {
+        auto x = node->as<NdWhile>();
+        std::stringstream ss;
+        ss << "while ";
+        if (x->vardef) ss << node2s(x->vardef);
+        if (x->cond) { ss << node2s(x->cond); }
+        ss << " " << node2s(x->body);
+        return ss.str();
+      }
+
+      case NodeKind::Try: {
+        auto x = node->as<NdTry>();
+        std::stringstream ss;
+
+        ss << "try " << node2s(x->body);
+        for (auto&& c : x->catches) {
+          ss << "\n"
+             << ind << "catch " << c->holder.text << ": " << node2s(c->error_type) << " "
+             << node2s(c->body);
+        }
+        return ss.str();
+      }
+
+      case NodeKind::Function: {
+        auto x = node->as<NdFunction>();
+        std::stringstream ss;
+
+        ss << "fn " << x->name.text << template_params_2s(x);
+
+        auto args = join(", ", x->args, [](NdFunction::Argument const& arg) {
+          std::stringstream a;
+          a << arg.name.text << ": " << node2s(arg.type);
+          return a.str();
+        });
+
+        if (x->take_self) { args = "self"s + (args.empty() ? "" : ", ") + args; }
+
+        ss << "(" << args << ") -> " << node2s(x->result_type) << " " << node2s(x->body);
+
+        return ss.str();
+      }
+
+      case NodeKind::Enum:
+        return "enum ";
+
+      case NodeKind::Class: {
+        auto x = node->as<NdClass>();
+        indent++;
+
+        std::stringstream ss;
+        ss << "class " << x->name.text << " {\n"
+           << ind << "  " << join("\n" + ind + "  ", x->fields, node2s) << "\n"
+           << (x->methods.empty()
+                   ? ""
+                   : (ind + "  " + join("\n" + ind + "  ", x->methods, node2s) + "\n"))
+           << ind << "}";
+
+        indent--;
+        return ss.str();
+      }
+
+      case NodeKind::Namespace: {
+        auto x = node->as<NdNamespace>();
+        indent++;
+
+        std::stringstream ss;
+        ss << "namespace " << x->name << " {\n  " << join("\n  ", x->items, node2s) << "\n}";
+
+        indent--;
+        return ss.str();
+      }
+
+      case NodeKind::Module: {
+        auto x = node->as<NdModule>();
+        return join("\n", x->items, node2s);
+      }
+
+      case NodeKind::Return: {
+        auto x = node->as<NdReturn>();
+        std::stringstream ss;
+        ss << "return";
+        if (x->expr) { ss << " " << node2s(x->expr); }
+        ss << ";";
+        return ss.str();
+      }
     }
 
     if (node->is_expr()) {
       auto ex = node->as<NdExpr>();
-      return node2s(ex->lhs) + " " + ex->token.text + " " + node2s(ex->rhs);
+      std::stringstream ss;
+      ss << node2s(ex->lhs) << " " << ex->token.text << " " << node2s(ex->rhs);
+      return ss.str();
     }
 
-    return "???";
+    return "<"s + node->token.text + ">";
   }
 
 } // namespace fire

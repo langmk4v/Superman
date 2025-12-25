@@ -3,7 +3,9 @@
         {
             "name": "Linux",
             "includePath": [
-                "${workspaceFolder}/**"
+                "${workspaceFolder}/include/*",
+                "${workspaceFolder}/include/types/*",
+                "${workspaceFolder}/include/classes/*"
             ],
             "defines": [
                 "_FIRE_DEBUG_"

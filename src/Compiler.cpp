@@ -29,20 +29,4 @@ namespace fire {
     return "nop;";
   }
 
-  void Compiler::compile_full(IR* ir) {
-    std::vector<Instruction> out;
-
-    auto comp = Compiler(out);
-
-    comp.compile(ir);
-  }
-
-  void Compiler::compile(IR* ir) {
-    (void)ir;
-    (void)out;
-    (void)label_index;
-
-    todo;
-  }
-
 } // namespace fire

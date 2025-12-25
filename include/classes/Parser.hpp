@@ -13,7 +13,8 @@ namespace fire {
     Token* cur;
 
   public:
-    Parser(SourceCode& source, std::vector<Token>& _tokens) : source(source), tokens(_tokens), cur(tokens.data()) {
+    Parser(SourceCode& source, std::vector<Token>& _tokens)
+        : source(source), tokens(_tokens), cur(tokens.data()) {
       (void)source;
       (void)tokens;
     }
@@ -67,12 +68,20 @@ namespace fire {
 
     void ps_import();
 
+    void merge_namespaces(std::vector<Node*>& items);
+
     NdModule* parse();
 
   private:
-    bool is_end() { return cur->is(TokenKind::Eof); }
-    bool eat(char const* s) { return cur->text == s ? (cur++, true) : false; }
-    bool look(char const* s) { return cur->text == s; }
+    bool is_end() {
+      return cur->is(TokenKind::Eof);
+    }
+    bool eat(char const* s) {
+      return cur->text == s ? (cur++, true) : false;
+    }
+    bool look(char const* s) {
+      return cur->text == s;
+    }
     Token* expect(char const* s) {
       if (cur->text != s) throw err::expected_but_found(*cur, s);
       return cur++;
