@@ -2,111 +2,96 @@
 
 #include <string>
 #include <vector>
-#include <filesystem>
+#include <stdexcept>
+
+extern "C" {
+#include "fs_c.h"
+}
 
 namespace fire {
 
   class FileSystem {
   public:
-    struct DirectoryWrapper {
-      std::string path;
-      std::string full_path;
-
-      std::vector<DirectoryWrapper> directories;
-      std::vector<std::filesystem::path> files;
-
-      DirectoryWrapper(std::string const& path)
-          : path(FileSystem::GetBaseName(path)), full_path(FileSystem::GetFullPath(path)) {
-        if (!FileSystem::IsDirectory(path)) {
+    class DirectoryWrapper {
+    public:
+      explicit DirectoryWrapper(std::string const& path) : impl(fs_dir_create(path.c_str())) {
+        if (!impl) {
           throw std::invalid_argument("path is not a directory or not exists");
         }
-
-        for (auto& entry : std::filesystem::directory_iterator(path)) {
-          if (FileSystem::IsDirectory(entry.path().string())) {
-            directories.push_back(DirectoryWrapper(entry.path().string()));
-          } else if (FileSystem::IsFile(entry.path().string())) {
-            files.push_back(entry.path());
-          }
-        }
       }
 
-      DirectoryWrapper* FindDirectory(std::string const& path) {
-        for (auto& dir : directories) {
-          if (dir.path == path) {
-            return &dir;
-          }
+      DirectoryWrapper(DirectoryWrapper const&) = delete;
+      DirectoryWrapper& operator=(DirectoryWrapper const&) = delete;
+
+      DirectoryWrapper(DirectoryWrapper&& other) noexcept : impl(other.impl) { other.impl = nullptr; }
+
+      DirectoryWrapper& operator=(DirectoryWrapper&& other) noexcept {
+        if (this != &other) {
+          fs_dir_destroy(impl);
+          impl = other.impl;
+          other.impl = nullptr;
         }
-        return nullptr;
+        return *this;
       }
 
-      //
-      // FindFile
-      //   find all files that match the path
-      //   if recursive is true, search recursively
-      //   return the list of files
-      //   if not found, return an empty list
-      std::vector<std::string> FindFile(std::string const& path, bool recursive = false) {
-        std::vector<std::string> hits;
-        for (auto& file : files) {
-          if (file.string() == path) {
-            hits.push_back(file.string());
-          }
+      ~DirectoryWrapper() { fs_dir_destroy(impl); }
+
+      // -----------------------------------------
+      // 検索系
+      // -----------------------------------------
+      std::vector<std::string> FindFile(std::string const& filename, bool recursive = false) const {
+        char** results = nullptr;
+        size_t count = 0;
+
+        fs_dir_find_file(impl, filename.c_str(), recursive ? 1 : 0, &results, &count);
+
+        std::vector<std::string> out;
+        out.reserve(count);
+
+        for (size_t i = 0; i < count; ++i) {
+          out.emplace_back(results[i]);
+          free(results[i]);
         }
-        if (recursive) {
-          for (auto& dir : directories) {
-            auto result = dir.FindFile(path, recursive);
-            if (!result.empty()) {
-              hits.insert(hits.end(), result.begin(), result.end());
-            }
-          }
-        }
-        return hits;
+        free(results);
+
+        return out;
       }
 
-      bool Contains_File(std::string const& path) const {
-        for (auto& file : files) {
-          if (file.string() == path) {
-            return true;
-          }
-        }
-        return false;
+      bool Contains_File(std::string const& filename) const {
+        return fs_dir_contains_file(impl, filename.c_str()) != 0;
       }
 
-      bool Contains_Directory(std::string const& path) const {
-        for (auto& dir : directories) {
-          if (dir.path == path) {
-            return true;
-          }
-        }
-        return false;
+      bool Contains_Directory(std::string const& dirname) const {
+        return fs_dir_contains_dir(impl, dirname.c_str()) != 0;
       }
 
-      void Dump(int indent) const;
+      // -----------------------------------------
+      // Dump（C 実装）
+      // -----------------------------------------
+      void Dump(int indent = 0) const { fs_dir_dump(impl, indent); }
+
+    private:
+      fs_dir* impl = nullptr;
     };
 
-    static void SetCwd(std::string const& path) { std::filesystem::current_path(path); }
+    // -----------------------------------------
+    // FileSystem API
+    // -----------------------------------------
+    static void SetCwd(std::string const& path);
+    static std::string GetCwd();
 
-    static std::string GetCwd() { return std::filesystem::current_path().string(); }
+    static std::string GetBaseName(std::string const& path);
+    static std::string GetFolderOfFile(std::string const& path);
 
-    static std::string GetBaseName(std::string const& path) { return std::filesystem::path(path).filename().string(); }
-
-    static std::string GetFullPath(std::string const& path) { return std::filesystem::absolute(path).string(); }
-
-    static std::string GetFolderOfFile(std::string const& path) {
-      return std::filesystem::path(path).parent_path().string();
-    }
-
-    static bool Exists(std::string const& path) { return std::filesystem::exists(path); }
-
-    static bool IsDirectory(std::string const& path) { return Exists(path) && std::filesystem::is_directory(path); }
-
-    static bool IsFile(std::string const& path) { return Exists(path) && !IsDirectory(path); }
+    static bool Exists(std::string const& path);
+    static bool IsDirectory(std::string const& path);
+    static bool IsFile(std::string const& path);
 
     static DirectoryWrapper GetDirectory(std::string const& path) { return DirectoryWrapper(path); }
 
     static std::vector<std::string> FindFileInDirectory(std::string const& filename, std::string const& directory,
                                                         bool recursive = false) {
-      return GetDirectory(directory).FindFile(filename, recursive);
+      return DirectoryWrapper(directory).FindFile(filename, recursive);
     }
   };
 
