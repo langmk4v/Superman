@@ -15,6 +15,8 @@ namespace fire {
 
     Symbol,
 
+    KeyValuePair,
+
     Self, // "self" keyword
 
     DeclType,
@@ -72,8 +74,14 @@ namespace fire {
 
     // if  ::=  if expr stmt ("else" stmt)?
     If,
+    Match,
+    Switch,
 
+    Loop,
     For,
+    Do,
+    While,
+
     Break,
     Continue,
     Return,
@@ -84,6 +92,8 @@ namespace fire {
     Class,
 
     Enum,
+
+    Namespace,
 
     Module,
   };
@@ -97,7 +107,9 @@ namespace fire {
 
   struct Node {
     NodeKind kind;
-    Token& token;
+
+    Token token;
+    std::string text;
 
     ScopeContext* scope_ptr = nullptr;
 
@@ -115,7 +127,14 @@ namespace fire {
     virtual ~Node() {}
 
   protected:
-    Node(NodeKind k, Token& t) : kind(k), token(t) {}
+    Node(NodeKind k, Token& t) : kind(k), token(t), text(t.text) {}
+    Node(NodeKind kind, std::string const& text) : kind(kind), text(text) {}
+  };
+
+  struct NdKeyValuePair : Node {
+    Node* key;
+    Node* value;
+    NdKeyValuePair(Token& t, Node* key, Node* value) : Node(NodeKind::KeyValuePair, t), key(key), value(value) {}
   };
 
   struct NdValue : Node {
@@ -170,6 +189,28 @@ namespace fire {
     NdNew(Token& tok) : Node(NodeKind::New, tok) {}
   };
 
+  struct NdRef : Node {
+    Node* expr = nullptr;
+    NdRef(Token& tok) : Node(NodeKind::Ref, tok) {}
+  };
+
+  struct NdDeref : Node {
+    Node* expr = nullptr;
+    NdDeref(Token& tok) : Node(NodeKind::Deref, tok) {}
+  };
+
+  // !a
+  struct NdNot : Node {
+    Node* expr = nullptr;
+    NdNot(Token& tok) : Node(NodeKind::Not, tok) {}
+  };
+
+  // ~a
+  struct NdBitNot : Node {
+    Node* expr = nullptr;
+    NdBitNot(Token& tok) : Node(NodeKind::BitNot, tok) {}
+  };
+
   struct NdArray : Node {
     std::vector<Node*> data;
     NdArray(Token& t) : Node(NodeKind::Array, t) {}
@@ -222,10 +263,19 @@ namespace fire {
   };
 
   struct NdIf : Node {
+    NdLet* vardef = nullptr;
     Node* cond = nullptr;
     Node* thencode = nullptr;
     Node* elsecode = nullptr;
     NdIf(Token& t) : Node(NodeKind::If, t) {}
+  };
+
+  struct NdScope;
+  struct NdWhile : Node {
+    NdLet* vardef = nullptr;
+    Node* cond = nullptr;
+    NdScope* body = nullptr;
+    NdWhile(Token& t) : Node(NodeKind::While, t) {}
   };
 
   struct NdReturn : Node {
@@ -288,6 +338,13 @@ namespace fire {
     NdFunction* m_delete = nullptr;
 
     NdClass(Token& tok, Token& name) : NdTemplatableBase(NodeKind::Class, tok), name(name) {}
+  };
+
+  struct NdNamespace : Node {
+    std::string name;
+    std::vector<Node*> items;
+
+    NdNamespace(Token& tok, std::string const& name) : Node(NodeKind::Namespace, tok), name(name) {}
   };
 
   struct NdModule : Node {

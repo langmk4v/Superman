@@ -119,6 +119,10 @@ namespace fire {
     };
 
     namespace parses {
+      struct import_not_allowed_here : e {
+        import_not_allowed_here(Token const& t) : e(t, "import is not allowed here") {}
+      };
+
       struct cannot_use_decltype_here : e {
         cannot_use_decltype_here(Token const& t) : e(t, "cannot use decltype() here") {}
       };

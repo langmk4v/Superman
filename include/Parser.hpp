@@ -37,7 +37,7 @@ namespace fire {
     Node* ps_assign();
     Node* ps_expr();
 
-    NdLet* ps_let(bool from_var_kwd = false);
+    NdLet* ps_let(bool expect_semi = true);
     Node* ps_stmt();
     NdScope* ps_scope();
 
@@ -57,8 +57,9 @@ namespace fire {
 
     NdEnum* ps_enum();
 
-    Node* ps_mod_item();
+    NdNamespace* ps_namespace();
 
+    Node* ps_mod_item();
     NdModule* ps_mod();
 
     void ps_import(NdModule* mod);

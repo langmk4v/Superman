@@ -4,7 +4,7 @@
 namespace fire::err {
 
   e::e(Token const& tok, std::string msg, errTypes et)
-      : s(tok.source), pos(tok.pos), len(tok.text.length()), msg(std::move(msg)), line(tok.line), column(tok.column) {
+      : s(*tok.source), pos(tok.pos), len(tok.text.length()), msg(std::move(msg)), line(tok.line), column(tok.column) {
     if (et == ET_Error)
       tag = COL_RED "error" COL_DEFAULT;
     else if (et == ET_Warn)

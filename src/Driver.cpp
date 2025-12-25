@@ -26,11 +26,7 @@ namespace fire {
 
     for (auto source : this->inputs) {
       try {
-        source->tokens = Lexer(*source).lex();
-
-        source->parsed_mod = Parser(*source, source->tokens).parse();
-
-        auto mod = source->parsed_mod;
+        auto mod = source->parse();
 
         mod->name = "__main__";
 

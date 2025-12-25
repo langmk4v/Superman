@@ -144,7 +144,12 @@ namespace fire {
         auto y = new NdCallFunc(x, *op);
         if (!eat(")")) {
           do {
-            y->args.emplace_back(ps_expr());
+            auto key = ps_expr();
+
+            if (eat(":"))
+              y->args.push_back(new NdKeyValuePair(*op, key, ps_expr()));
+            else
+              y->args.push_back(key);
           } while (eat(","));
           expect(")");
         }
@@ -191,6 +196,37 @@ namespace fire {
       todoimpl;
     }
 
+    if (eat("&")) {
+      auto node = new NdRef(tok);
+      node->expr = ps_subscript();
+      return node;
+    }
+
+    if (eat("*")) {
+      auto node = new NdDeref(tok);
+      node->expr = ps_subscript();
+      return node;
+    }
+
+    if (eat("!")) {
+      auto node = new NdNot(tok);
+      node->expr = ps_subscript();
+      return node;
+    }
+
+    if (eat("~")) {
+      auto node = new NdBitNot(tok);
+      node->expr = ps_subscript();
+      return node;
+    }
+
+    if (eat("-")) {
+      auto zero = new NdValue(tok);
+      zero->obj = new ObjInt(0);
+      return new NdExpr(NodeKind::Sub, tok, zero, ps_subscript());
+    }
+
+    eat("+");
     return ps_subscript();
   }
 
@@ -340,12 +376,12 @@ namespace fire {
 
   Node* Parser::ps_expr() { return ps_assign(); }
 
-  NdLet* Parser::ps_let(bool from_var_kwd) {
-    auto& tok = *expect(from_var_kwd ? "var" : "let");
+  NdLet* Parser::ps_let(bool expect_semi) {
+    auto& tok = *expect("var");
     auto x = new NdLet(tok, *expect_ident());
     if (eat(":")) x->type = ps_type_name();
     if (eat("=")) x->init = ps_expr();
-    expect(";");
+    if (expect_semi) expect(";");
     return x;
   }
 
@@ -354,13 +390,22 @@ namespace fire {
 
     if (look("{")) return ps_scope();
 
-    if (look("let")) return ps_let();
+    if (look("var")) return ps_let();
 
     if (eat("if")) {
       auto x = new NdIf(tok);
-      x->cond = ps_expr();
+      if (look("var")) x->vardef = ps_let(false);
+      if (!x->vardef || eat(";")) x->cond = ps_expr();
       x->thencode = ps_stmt();
       if (eat("else")) x->elsecode = ps_stmt();
+      return x;
+    }
+
+    if (eat("while")) {
+      auto x = new NdWhile(tok);
+      if (look("var")) x->vardef = ps_let(false);
+      if (!x->vardef || eat(";")) x->cond = ps_expr();
+      x->body = ps_scope();
       return x;
     }
 
@@ -437,16 +482,21 @@ namespace fire {
     if (eat(":")) node->base_class = ps_type_name();
 
     expect("{");
-    if (eat("}")) throw err::empty_class_or_enum_is_not_valid(tok);
-    while (!is_end()) {
-      auto atepub = eat("pub");
 
-      if (look("fn"))
-        node->methods.emplace_back(ps_function(true))->is_pub = atepub;
+    if (eat("}")) throw err::empty_class_or_enum_is_not_valid(tok);
+
+    while (!is_end()) {
+      auto public_flag = eat("pub");
+
+      // method
+      if (look("fn")) node->methods.emplace_back(ps_function(true))->is_pub = public_flag;
+
+      // field
       else if (look("var"))
-        node->fields.emplace_back(ps_let(true))->is_pub = atepub;
+        node->fields.emplace_back(ps_let())->is_pub = public_flag;
+
       else if (eat("new")) {
-        if (!atepub) {
+        if (!public_flag) {
           warns::added_pub_attr_automatically (*(cur - 1))();
           warns::show_note(*(cur - 1), "insert 'pub' keyword to remove this warning messages.")();
         }
@@ -478,11 +528,35 @@ namespace fire {
 
   NdEnum* Parser::ps_enum() { todoimpl; }
 
+  NdNamespace* Parser::ps_namespace() {
+    Token* tok = expect("namespace");
+
+    std::string name = expect_ident()->text;
+
+    NdNamespace* ns = new NdNamespace(*tok, name);
+
+    while (eat("::")) {
+      todo;
+    }
+
+    Token* scope_tok = expect("{");
+
+    if (eat("}")) return ns;
+
+    while (!is_end()) {
+      ns->items.emplace_back(ps_mod_item());
+      if (eat("}")) return ns;
+    }
+
+    throw err::scope_not_terminated(*scope_tok);
+  }
+
   Node* Parser::ps_mod_item() {
-    if (look("let")) return ps_let();
+    if (look("var")) return ps_let();
     if (look("fn")) return ps_function();
     if (look("class")) return ps_class();
     if (look("enum")) return ps_enum();
+    if (look("namespace")) return ps_namespace();
 
     throw err::expected_item_of_module(*cur);
   }
@@ -522,18 +596,30 @@ namespace fire {
     } else if (std::filesystem::is_directory(path)) {
       source.import_directory(path);
     }
-
-    for (auto&& i : source.imports) {
-      printd(i->path);
-    }
   }
 
   NdModule* Parser::ps_mod() {
     NdModule* mod = new NdModule(*cur);
 
+    while (!is_end() && eat("import")) {
+      ps_import(mod);
+    }
+
+    for (auto&& src : source.imports) {
+      if (src->imported_nodes) continue;
+
+      auto submod = src->parse();
+
+      for (auto&& item : submod->items) {
+        mod->items.emplace_back(item);
+      }
+
+      src->imported_nodes = true;
+    }
+
     while (!is_end()) {
-      if (eat("import")) {
-        ps_import(mod);
+      if (look("import")) {
+        throw err::parses::import_not_allowed_here(*cur);
       }
 
       auto item = mod->items.emplace_back(ps_mod_item());

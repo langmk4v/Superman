@@ -1,12 +1,17 @@
 #include <fstream>
 #include <filesystem>
+#include <unordered_map>
 
 #include "Utils.hpp"
 #include "Token.hpp"
 #include "Lexer.hpp"
+#include "Parser.hpp"
+
 #include "SourceFile.hpp"
 
 namespace fire {
+  std::unordered_map<std::string, SourceCode*> all_sources;
+
   SourceCode::SourceCode(std::string const& _path) : path(std::filesystem::absolute(_path)) {
     auto ifs = std::ifstream(this->path);
 
@@ -14,12 +19,24 @@ namespace fire {
 
     for (std::string line; std::getline(ifs, line);)
       this->data.append(line.append("\n"));
+
+    all_sources[this->path] = this;
+  }
+
+  NdModule* SourceCode::parse() {
+    this->tokens = Lexer(*this).lex();
+
+    this->parsed_mod = Parser(*this, this->tokens).parse();
+
+    return this->parsed_mod;
   }
 
   //
   // import a file
   SourceCode* SourceCode::import(std::string const& _path) {
-    printd(_path);
+    if (all_sources.find(_path) != all_sources.end()) {
+      return all_sources[_path];
+    }
 
     auto new_source = new SourceCode(_path);
 

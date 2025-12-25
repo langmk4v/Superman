@@ -3,11 +3,9 @@ import SourceFile;
 
 namespace firec {
     class Lexer {
-        fields {
-            source: SourceFile,
-            pos: usize,
-            len: usize
-        }
+        var source: SourceFile;
+        var pos: usize;
+        var len: usize;
 
         fn new(source: SourceFile) -> Lexer {
             return Lexer(source: source, pos: 0, len: source.data.length());
@@ -38,8 +36,9 @@ namespace firec {
             var loc = SourceLocation(self.source, pos);
 
             if c.is_digit() {
-                while (!self.is_end() && self.peek().is_digit())
+                while (!self.is_end() && self.peek().is_digit()) {
                     self.pos++;
+                }
 
                 return Token(kind: TokenKind::Integer(), text: self.source.data[pos: self.pos], location: loc);
             }

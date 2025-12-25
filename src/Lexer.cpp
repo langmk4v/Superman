@@ -16,7 +16,7 @@ namespace fire {
     while (!is_end())
       tokens.emplace_back(tokenize(peek()));
 
-    tokens.emplace_back(TokenKind::Eof, "", _source, _pos);
+    tokens.emplace_back(TokenKind::Eof, "", &_source, _pos);
 
     for (size_t i = 0; i < tokens.size(); i++)
       tokens[i].index = i;
@@ -81,7 +81,7 @@ namespace fire {
         if (peek() == 'f') _pos++, len++;
       }
       pass_space();
-      return Token(kind, std::string(str, len), _source, pos);
+      return Token(kind, std::string(str, len), &_source, pos);
     }
 
     // a-z|A-Z|_
@@ -90,7 +90,7 @@ namespace fire {
       while (!is_end() && (std::isalnum((c = peek())) || c == '_'))
         _pos++, len++;
       pass_space();
-      return Token(kind, std::string(str, len), _source, pos);
+      return Token(kind, std::string(str, len), &_source, pos);
     }
 
     // char or string
@@ -132,7 +132,7 @@ namespace fire {
       }
       _pos++;
       pass_space();
-      return Token(kind, ss, _source, pos);
+      return Token(kind, ss, &_source, pos);
     }
 
     // punctuator
@@ -146,11 +146,11 @@ namespace fire {
       if (match(s)) {
         _pos += s.length();
         pass_space();
-        return Token(TokenKind::Punctuator, s, _source, pos);
+        return Token(TokenKind::Punctuator, s, &_source, pos);
       }
     }
 
-    throw err::invalid_token(Token(TokenKind::Unknown, std::string(1, c), _source, pos));
+    throw err::invalid_token(Token(TokenKind::Unknown, std::string(1, c), &_source, pos));
   }
 
 } // namespace fire

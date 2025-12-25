@@ -18,7 +18,11 @@ namespace fire {
     SourceCode* parent = nullptr;
     std::vector<SourceCode*> imports;
 
+    bool imported_nodes = false;
+
     SourceCode(std::string const& _path);
+
+    NdModule* parse();
 
     SourceCode* import(std::string const& _path);
 
