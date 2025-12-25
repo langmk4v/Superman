@@ -1,0 +1,45 @@
+import Lexer;
+import Parser;
+import Sema;
+import Compiler;
+
+using firec;
+
+fn compile(path: string) -> bool {
+    try {
+        var tokens = Lexer::new(SourceFile::new(path)).lex();
+
+        var node = Parser::new(tokens).parse_all();
+
+        Sema::analyze(node);
+
+        Compiler::compile_full(IR::from(Node::lowering(node)));
+
+        return true;
+    }
+    catch FireError e {
+        e.print();
+    }
+
+    return false;
+}
+
+fn main(args: string...) -> int {
+    var inputs : Vec<string>;
+
+    for arg in args {
+        if arg.starts("-") {
+            var option = arg[1:];
+            ...
+        }
+        else {
+            inputs.append(arg);
+        }
+    }
+
+    for input in inputs {
+        compile(input);
+    }
+
+    return 0;
+}

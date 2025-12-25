@@ -1,0 +1,37 @@
+import Lexer::Token;
+import Compiler::LowedNode;
+
+namespace firec {
+    enum NodeKind {
+        Literal(Object),
+        CallFunc(func: Node, args: vector<Node>),
+        KeyValuePair(key: Node, value: Node),
+        Expr(ExprKind, vector<Node>),
+    }
+
+    enum ExprKind {
+        Add,
+        Sub,
+    }
+    
+    class Node {
+        var kind: NodeKind;
+        var token: Lexer::Token;
+
+        fn lowering() -> LowedNode {
+            ...
+        }
+
+        fn new_value(tok: Lexer::Token, val: Object) -> Node {
+            return Node(kind: NodeKind::Literal(val), token: tok);
+        }
+
+        fn new_call_func(tok: Lexer::Token, func: Node, args: vector<Node>) -> Node {
+            return Node(kind: NodeKind::CallFunc(func: func, args: args), token: tok);
+        }
+
+        fn new_expr(tok: Lexer::Token, kind: ExprKind, terms: vector<Node>) -> Node {
+            return Node(kind: NodeKind::Expr(kind, terms), token: tok);
+        }
+    }
+}

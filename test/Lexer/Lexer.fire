@@ -1,0 +1,70 @@
+import Token;
+import SourceFile;
+
+namespace firec {
+    class Lexer {
+        var source: SourceFile;
+        var pos: usize;
+        var len: usize;
+
+        fn new(source: SourceFile) -> Lexer {
+            return Lexer(source: source, pos: 0, len: source.data.length());
+        }
+
+        fn lex(self) -> List<Token> {
+            var list : List<Token>;
+
+            // "Option<T>" 型の変数を代入する var 文は、条件式として使用可能。
+
+            while var token = self.tokenize() {
+                list.push(*token);
+            }
+
+            return list;
+        }
+
+        fn tokenize(self) -> Option<Token> {
+            self.pass_space();
+
+            if self.is_end() {
+                return nullopt;
+            }
+
+            var c = self.peek();
+            var pos = self.pos;
+
+            var loc = SourceLocation(self.source, pos);
+
+            if c.is_digit() {
+                while (!self.is_end() && self.peek().is_digit()) {
+                    self.pos++;
+                }
+
+                return Token(kind: TokenKind::Integer(), text: self.source.data[pos: self.pos], location: loc);
+            }
+
+            // else if ...
+
+            else if var (kind, text) = self.find_punct() {
+                return Token(kind: TokenKind::Punctuator(kind), text: text, location: loc);
+            }
+
+            Todo(); // error
+        }
+
+        fn find_punct(self) -> Option<(TokenPunctuators, string)> {
+            var static table : Array<(TokenPunctuators, string)> = [
+                (TokenPunctuators::Plus, "+"),
+                (TokenPunctuators::Minus, "-")
+            ];
+
+            for pair in table {
+                if self.eat(pair.second) {
+
+                }
+            }
+
+            return nullopt;
+        }
+    }
+}

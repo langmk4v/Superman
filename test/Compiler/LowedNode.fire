@@ -1,0 +1,16 @@
+namespace firec {
+    enum LowedNodeKind {
+        Expr(Node),
+        Vardef(name: string, expr: Node),
+        Return(expr: Node),
+
+    }
+
+    class LowedNode {
+        var kind: LowedNodeKind;
+
+        fn new_expr(node: Node) -> LowedNode {
+            return LowedNode(kind: LowedNodeKind::Expr(node));
+        }
+    }
+}

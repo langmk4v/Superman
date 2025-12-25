@@ -1,0 +1,16 @@
+namespace firec {
+    class SourceFile {
+        var path: string;
+        var data: string;
+        var fs: File;
+
+        fn open(path: string) -> SourceFile {
+            return SourceFile();
+        }
+    }
+
+    class SourceLocation {
+        var source: SourceFile ref;
+        var position: usize;
+    }
+}

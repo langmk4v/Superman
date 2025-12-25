@@ -65,7 +65,7 @@ ASMFILES	:=	$(notdir $(foreach dir,$(SOURCE_DIR),$(wildcard $(dir)/*$(EXT_ASM)))
 CFILES		:=	$(notdir $(foreach dir,$(SOURCE_DIR),$(wildcard $(dir)/*$(EXT_C))))
 CXXFILES	:=	$(notdir $(foreach dir,$(SOURCE_DIR),$(wildcard $(dir)/*$(EXT_CXX))))
 
-export	OFILES	:=	$(CXXFILES:$(EXT_CXX)=.o)
+export	OFILES	:=	$(ASMFILES:$(EXT_ASM)=.o) $(CFILES:$(EXT_C)=.o) $(CXXFILES:$(EXT_CXX)=.o)
 
 .PHONY: all debug release clean re bak bak_full restore
 

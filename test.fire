@@ -1,0 +1,6 @@
+fn main(args: vector<string>) -> int {
+
+    println("Hello, World!");
+
+    return 0;
+}

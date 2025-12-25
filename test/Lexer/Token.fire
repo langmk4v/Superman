@@ -1,0 +1,31 @@
+import SourceFile;
+
+namespace firec {
+    enum TokenKind {
+        Emtpy,
+        Integer(i64),
+        Float(f64),
+        Char(char),
+        String(string),
+        Identifier,
+        Punctuator(TokenPunctuators),
+        Eof
+    }
+
+    enum TokenPunctuators {
+        Plus,
+        Minus,
+    }
+
+    class Token {
+        var kind: TokenKind;
+        var text: string;
+        var location: SourceLocation;
+
+        default {
+            kind: TokenKind::Empty,
+            text: "",
+            location: Null
+        }
+    }
+}
