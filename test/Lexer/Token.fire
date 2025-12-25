@@ -14,18 +14,12 @@ namespace firec {
 
     enum TokenPunctuators {
         Plus,
-        Minus,
+        Minus
     }
 
     class Token {
         var kind: TokenKind;
         var text: string;
         var location: SourceLocation;
-
-        default {
-            kind: TokenKind::Empty,
-            text: "",
-            location: Null
-        }
     }
 }

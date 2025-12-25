@@ -1,5 +1,6 @@
 #include <iostream>
 #include <string>
+#include <filesystem>
 
 #include "Utils.hpp"
 
@@ -15,7 +16,15 @@
 
 namespace fire {
 
+  Driver* __instance = nullptr;
+
+  Driver::Driver() { __instance = this; }
+
+  Driver* Driver::get_instance() { return __instance; }
+
   int Driver::main(int argc, char** argv) {
+    this->cwd = std::filesystem::current_path().string();
+
     for (int i = 1; i < argc; i++)
       this->inputs.emplace_back(new SourceCode(argv[i]));
 
@@ -25,6 +34,9 @@ namespace fire {
     }
 
     for (auto source : this->inputs) {
+
+      std::filesystem::current_path(source->get_folder());
+
       try {
         auto mod = source->parse();
 

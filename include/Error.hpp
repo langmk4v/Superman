@@ -123,6 +123,10 @@ namespace fire {
     };
 
     namespace parses {
+      struct expected_catch_block : e {
+        expected_catch_block(Token const& t) : e(t, "expected catch block") {}
+      };
+
       struct import_not_allowed_here : e {
         import_not_allowed_here(Token const& t) : e(t, "import is not allowed here") {}
       };

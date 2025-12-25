@@ -2,8 +2,7 @@ namespace firec {
     enum LowedNodeKind {
         Expr(Node),
         Vardef(name: string, expr: Node),
-        Return(expr: Node),
-
+        Return(expr: Node)
     }
 
     class LowedNode {

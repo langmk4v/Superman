@@ -75,6 +75,9 @@ namespace fire {
 
     Let,
 
+    Try,
+    Catch,
+
     // if  ::=  if expr stmt ("else" stmt)?
     If,
     Match,
@@ -95,6 +98,7 @@ namespace fire {
     Class,
 
     Enum,
+    EnumeratorDef,
 
     Namespace,
 
@@ -285,6 +289,20 @@ namespace fire {
 
   struct NdScope;
 
+  struct NdCatch : Node {
+    Token name;
+    NdSymbol* error_type = nullptr;
+    NdScope* body = nullptr;
+    NdCatch(Token& t) : Node(NodeKind::Catch, t) {}
+  };
+
+  struct NdTry : Node {
+    NdScope* body = nullptr;
+    std::vector<NdCatch*> catches;
+    NdScope* finally_block = nullptr;
+    NdTry(Token& t) : Node(NodeKind::Try, t) {}
+  };
+
   struct NdIf : Node {
     NdLet* vardef = nullptr;
     Node* cond = nullptr;
@@ -353,7 +371,22 @@ namespace fire {
     NdFunction(Token& t, Token& name) : NdTemplatableBase(NodeKind::Function, t), name(name) {}
   };
 
+  struct __attribute__((packed)) NdEnumeratorDef : Node {
+    Token name;
+    NdSymbol* variant_type = nullptr;
+    std::vector<Node*> multiple;
+
+    bool is_no_variants : 1 = false;   // Kind
+    bool is_one_type : 1 = false;      // Kind(T)
+    bool is_type_names : 1 = false;    // Kind(T, U, ...)  -->  multiple< NdSymbol >
+    bool is_struct_fields : 1 = false; // Kind(a: T, ...)  -->  multiple< NdKeyValuePair >
+
+    NdEnumeratorDef(Token& t) : Node(NodeKind::EnumeratorDef, t) {}
+  };
+
   struct NdEnum : Node {
+    Token name;
+    std::vector<NdEnumeratorDef*> enumerators;
     NdEnum(Token& t) : Node(NodeKind::Enum, t) {}
   };
 

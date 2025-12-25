@@ -1,9 +1,9 @@
 namespace firec {
-    virtual class IR {
+    class IR {
         
 
 
-        fn from(Lowed) -> IR {
+        fn from(lownode: LowedNode) -> IR {
 
         }
     }

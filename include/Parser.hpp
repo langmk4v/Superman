@@ -55,12 +55,15 @@ namespace fire {
 
     NdClass* ps_class();
 
+    NdEnumeratorDef* ps_enumerator_def();
     NdEnum* ps_enum();
 
     NdNamespace* ps_namespace();
 
     Node* ps_mod_item();
     NdModule* ps_mod();
+
+    void ps_do_import(Token* import_token, std::string path);
 
     void ps_import();
 

@@ -37,8 +37,8 @@ COMMONFLAGS		:=	\
 	$(FLAGS_WARN) \
 	$(foreach d,$(FLAGS_DEFINE),-D$(d))
 
-FLAGS_C			:=	$(COMMONFLAGS) -std=c17
-FLAGS_CXX		:=	$(COMMONFLAGS) -std=c++20
+FLAGS_C			:=	$(COMMONFLAGS) -std=c23
+FLAGS_CXX		:=	$(COMMONFLAGS) -std=c++20 -Wno-packed-non-pod
 FLAGS_LD		:=	-Wl,--gc-sections,-s -fuse=mold
 
 %.o: %$(EXT_ASM)

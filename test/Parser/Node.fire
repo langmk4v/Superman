@@ -6,12 +6,12 @@ namespace firec {
         Literal(Object),
         CallFunc(func: Node, args: vector<Node>),
         KeyValuePair(key: Node, value: Node),
-        Expr(ExprKind, vector<Node>),
+        Expr(ExprKind, vector<Node>)
     }
 
     enum ExprKind {
         Add,
-        Sub,
+        Sub
     }
     
     class Node {
@@ -19,7 +19,6 @@ namespace firec {
         var token: Lexer::Token;
 
         fn lowering() -> LowedNode {
-            ...
         }
 
         fn new_value(tok: Lexer::Token, val: Object) -> Node {
