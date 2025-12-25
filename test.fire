@@ -8,6 +8,8 @@ namespace AAA {
 
 fn main(args: vector<string>) -> int {
 
+    var x = AAA::MyClass(num: 123, str: "unchi");
+
     println("Hello, World!");
 
     return 0;

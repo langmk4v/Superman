@@ -108,9 +108,10 @@ namespace fire {
   struct NdFunction;
 
   //
-  // Sema.hpp
-  struct ScopeContext;
+  // in Sema
+  struct Symbol;
   struct VariableInfo;
+  struct Scope;
 
   struct Node {
     NodeKind kind;
@@ -118,7 +119,7 @@ namespace fire {
     Token token;
     std::string text;
 
-    ScopeContext* scope_ptr = nullptr;
+    Scope* scope_ptr = nullptr;
 
     TypeInfo ty = {};
 
@@ -190,6 +191,8 @@ namespace fire {
     bool is_local_var = false;
     bool is_global_var = false; //
     int var_offset = 0;         // if variable
+
+    Symbol* symbol_ptr = nullptr;
 
     bool is_var() const {
       return is_local_var || is_global_var;
@@ -316,7 +319,7 @@ namespace fire {
 
     int index = 0;
 
-    VariableInfo* var_info_ptr = nullptr;
+    Symbol* symbol_ptr = nullptr;
 
     NdLet(Token& t, Token& name) : Node(NodeKind::Let, t), name(name) {
     }
