@@ -160,7 +160,8 @@ namespace fire {
         cur++;
         break;
 
-      default: throw err::invalid_syntax(*cur);
+      default:
+        throw err::invalid_syntax(*cur);
     }
 
     return v;
@@ -710,16 +711,14 @@ namespace fire {
 
     NdNamespace* ns = new NdNamespace(*tok, name);
 
-    while (eat("::")) {
-      todo;
-    }
-
     Token* scope_tok = expect("{");
 
     if (eat("}")) return ns;
 
     while (!is_end()) {
+
       ns->items.emplace_back(ps_mod_item());
+
       if (eat("}")) return ns;
     }
 
@@ -835,8 +834,44 @@ namespace fire {
     return mod;
   }
 
+  void Parser::fix_namespace_duplications(std::vector<Node*>& items) {
+    bool flag=false;
+
+  __begin__:;
+    flag=false;
+    for(size_t i=0;i<items.size();){
+      if(auto orig = items[i]->as<NdNamespace>();orig->is(NodeKind::Namespace)){
+        for(size_t j=i+1;j<items.size();j++){
+          if(auto dup=items[j]->as<NdNamespace>();dup->is(NodeKind::Namespace)&&dup->name==orig->name){
+            for(auto x:dup->items)
+              orig->items.push_back(x);
+            delete dup;
+            items.erase(items.begin()+j);
+            flag=true;
+            goto __merged;
+          }
+        }
+        i++;
+        __merged:;
+      }
+      else {
+        i++;
+      }
+    }
+
+    if(flag) goto __begin__;
+
+    for(auto&& x:items){
+      if(x->is(NodeKind::Namespace)) fix_namespace_duplications(x->as<NdNamespace>()->items);
+    }
+  }
+
   NdModule* Parser::parse() {
-    return ps_mod();
+    auto mod = ps_mod();
+
+    fix_namespace_duplications(mod->items);
+
+    return mod;
   }
 
 } // namespace fire

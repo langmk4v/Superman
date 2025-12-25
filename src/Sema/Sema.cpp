@@ -366,7 +366,9 @@ namespace fire {
       case NodeKind::If: {
         auto if_node = node->as<NdIf>();
 
+        ctx.cur_scope = if_node->scope_ptr;
         resolve_names(if_node->cond, ctx);
+
         resolve_names(if_node->thencode, ctx);
 
         if (if_node->elsecode) resolve_names(if_node->elsecode, ctx);
