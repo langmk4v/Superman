@@ -1,11 +1,12 @@
+import std::IO::FileSystem;
+
 namespace firec {
     class SourceFile {
         var path: string;
         var data: string;
-        var fs: File;
 
         fn open(path: string) -> SourceFile {
-            return SourceFile();
+            return SourceFile(fs::open(path).read_text());
         }
     }
 

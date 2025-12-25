@@ -781,7 +781,8 @@ namespace fire {
 
       while (true) {
         if (fol == Driver::get_instance()->get_first_cwd()) {
-          // printd("@@@");
+          e.msg.pop_back();
+          e.msg += ".fire'";
           throw e;
         }
 
@@ -794,8 +795,6 @@ namespace fire {
           ps_do_import(import_token, tmp);
           return;
         }
-
-        // std::cout << fol << std::endl;
       }
 
       throw e;
@@ -810,7 +809,7 @@ namespace fire {
     }
 
     for (auto&& src : source.imports) {
-      if (src->imported_nodes) continue;
+      if (src->is_node_imported) continue;
 
       auto submod = src->parse();
 
@@ -818,7 +817,7 @@ namespace fire {
         mod->items.emplace_back(item);
       }
 
-      src->imported_nodes = true;
+      src->is_node_imported = true;
     }
 
     while (!is_end()) {

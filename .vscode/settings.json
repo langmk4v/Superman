@@ -54,6 +54,10 @@
         "typeinfo": "cpp",
         "chrono": "cpp",
         "format": "cpp",
-        "span": "cpp"
+        "span": "cpp",
+        "cstring": "cpp",
+        "charconv": "cpp",
+        "cinttypes": "cpp",
+        "variant": "cpp"
     }
 }

@@ -3,7 +3,7 @@ namespace firec {
         
 
 
-        fn from(lownode: LowedNode) -> IR {
+        fn from(Lowed) -> IR {
 
         }
     }

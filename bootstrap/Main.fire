@@ -3,11 +3,11 @@ import Parser;
 import Sema;
 import Compiler;
 
-// using firec;
+using firec;
 
 fn compile(path: string) -> bool {
     try {
-        var tokens = Lexer::new(SourceFile::new(path)).lex();
+        var tokens = Lexer::new(SourceFile::open(path)).lex();
 
         var node = Parser::new(tokens).parse_all();
 

@@ -112,6 +112,9 @@ restore:
 		echo backup folder not found. \
 	fi
 
+copy:
+	./copy-bootstrap.sh
+
 else
 
 DEPENDS		:=	$(OFILES:.o=.o.d)

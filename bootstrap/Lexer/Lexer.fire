@@ -52,19 +52,35 @@ namespace firec {
             Todo(); // error
         }
 
-        fn find_punct(self) -> Option<(TokenPunctuators, string)> {
-            var static table : Array<(TokenPunctuators, string)> = [
-                (TokenPunctuators::Plus, "+"),
-                (TokenPunctuators::Minus, "-")
+        fn find_punct(self) -> Option<(string, TokenPunctuators)> {
+            var static table : Array<(string, TokenPunctuators)> = [
+                ("+",   TokenPunctuators::Plus),
+                ("-",   TokenPunctuators::Minus)
             ];
 
             for pair in table {
-                if self.eat(pair.second) {
-
+                if self.eat(pair.0) {
+                    return pair;
                 }
             }
 
             return nullopt;
+        }
+
+        fn match(self, s: string) -> bool {
+            return self.pos + s.length() <= self.len && self.source.data[self.pos: self.pos + s.length()] == s;
+        }
+
+        fn eat(self, s: string) -> bool {
+            if self.match(s) {
+                self.pos += s.length();
+                return true;
+            }
+            return false;
+        }
+
+        fn pass_space(self) {
+            
         }
     }
 }
