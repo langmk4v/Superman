@@ -65,6 +65,7 @@ namespace fire {
 
     bool as_arg_of_callfunc = false;
     NdCallFunc* parent_cf_nd = nullptr;
+    TypeInfo* self_ty_ptr = nullptr;
 
     NdEnumeratorDef** enumerator_node_out = nullptr;
   };
@@ -102,6 +103,13 @@ namespace fire {
   public:
     TypeChecker(Sema& S) : S(S) {
     }
+
+    TypeInfo case_call_func(NdCallFunc* cf, NdVisitorContext ctx);
+    TypeInfo case_method_call(NdCallFunc* cf, NdVisitorContext ctx);
+
+    TypeInfo case_construct_enumerator(
+      NdCallFunc* cf, NdEnumeratorDef* en_def, TypeInfo& callee_ty,
+      size_t argc_give, std::vector<TypeInfo>& arg_types, NdVisitorContext ctx);
 
     TypeInfo eval_expr_ty(Node* node, NdVisitorContext ctx);
     TypeInfo eval_typename_ty(NdSymbol* node, NdVisitorContext ctx);

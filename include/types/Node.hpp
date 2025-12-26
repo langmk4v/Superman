@@ -244,6 +244,8 @@ namespace fire {
     bool is_method_call = false;
     Node* inst_expr = nullptr; // 'a' of "a.f()"
 
+    Node* self_obj(){return inst_expr;}
+
     // inst_expr はあるが、args にも同じものを先頭に追加します
 
     NdFunction* func_nd = nullptr;
@@ -459,8 +461,17 @@ namespace fire {
   };
 
   struct NdEnumeratorDef : Node {
+    enum VariantTypes {
+      NoVariants,
+      OneType,
+      MultipleTypes,
+      StructFields,
+    };
+
+    VariantTypes type = NoVariants;
+
     Token name;
-    NdSymbol* variant_type = nullptr;
+    NdSymbol* variant = nullptr;
     std::vector<Node*> multiple;
 
     NdEnum* parent_enum_node = nullptr;
@@ -468,11 +479,6 @@ namespace fire {
     std::string get_full_name() const {
       return parent_enum_node->name.text + "::" + name.text;
     }
-
-    bool is_no_variants : 1 = false;   // Kind
-    bool is_one_type : 1 = false;      // Kind(T)
-    bool is_type_names : 1 = false;    // Kind(T, U, ...)  -->  multiple< NdSymbol >
-    bool is_struct_fields : 1 = false; // Kind(a: T, ...)  -->  multiple< NdKeyValuePair >
 
     NdEnumeratorDef(Token& t) : Node(NodeKind::EnumeratorDef, t) {
     }

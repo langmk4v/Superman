@@ -8,58 +8,48 @@
 
 namespace fire {
   class Lexer {
-    SourceCode& _source;
-    size_t _pos;
+    SourceFile const* _source;
+    size_t _pos = 0;
     size_t const _len;
 
   public:
-    Lexer(SourceCode& source) : _source(source), _pos(0), _len(source.get_len()) {}
+    Lexer(SourceFile const* source) : _source(source), _pos(0), _len(source->length) {}
 
-    std::vector<Token> lex();
+    Token* lex();
 
-    //
-    // - remove_all_comments
-    // すべてのコメントを空白に置き換え
-    // ( エラー表示時に行・列の番号が変わってしまうため、削除はしない )
-    void remove_all_comments();
-
-    int find_comment(int begin) {
-      for (int i = begin; i + 2 < static_cast<int>(_len); i++)
-        if (match("//") || match("/*")) return i;
-
-      return -1;
-    }
+    Token* tokenize(char c, Token* prev);
 
   private:
     bool is_end() { return _pos >= _len; }
 
-    char peek() { return _source[_pos]; }
+    char peek() { return (*_source)[_pos]; }
+
+    char get_char(size_t pos) { return (*_source)[pos]; }
+
+    bool match(std::string_view s) {
+      return _pos + s.length() <= _len &&
+             std::strncmp(_source->data + _pos, s.data(), s.length()) == 0;
+    }
+
+    bool consume(std::string_view s) { return match(s) ? (_pos += s.length(), true) : false; }
 
     void pass_space() {
       while (!is_end() && isspace(peek()))
         _pos++;
     }
 
-    bool match(std::string const& s) { return _pos + s.length() <= _len && _source.data.substr(_pos, s.length()) == s; }
-
-    //
-    // - erase
-    //
-    // 現在位置から文字を n 個削除する・または c に置き換える
-    // 終端までに n 個分の文字がない場合は何もせず false を返す
-    bool erase(int n, char c = -1) { // -1 = 削除
-      if (_pos + n > _len) return false;
-
-      if (c == -1)
-        _source.data.erase(_source.data.begin() + _pos, _source.data.begin() + _pos + n);
-      else
-        std::fill(_source.data.begin() + _pos, _source.data.begin() + _pos + n, c);
-
-      return true;
+    void pass_line_comment() {
+      if (consume("//")) {
+        while (!is_end() && peek() != '\n')
+          _pos++;
+      }
     }
 
-    inline void replace(int n, char c) { erase(n, c); }
-
-    Token tokenize(char c);
+    void pass_block_comment() {
+      if (consume("/*")) {
+        while (!is_end() && !consume("*/"))
+          _pos++;
+      }
+    }
   };
 } // namespace fire

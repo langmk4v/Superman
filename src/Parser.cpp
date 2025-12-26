@@ -185,6 +185,11 @@ namespace fire {
       auto op = cur;
       if (eat("(")) {
         auto y = new NdCallFunc(x, *op);
+        if(x->is(NodeKind::MemberAccess)){
+          y->is_method_call = true;
+          y->inst_expr = x->as<NdExpr>()->lhs;
+          y->callee = x->as<NdExpr>()->rhs;
+        }
         if (!eat(")")) {
           do {
             auto key = ps_expr();
@@ -227,20 +232,10 @@ namespace fire {
           x->as<NdGetTupleElement>()->index_tok = cur;
           cur++;
           expect(">");
-          return x;
+          continue;
         }
-
-        auto right = ps_factor();
-
-        if (auto rr = right->as<NdCallFunc>(); right->is(NodeKind::CallFunc)) {
-          rr->is_method_call = true;
-          rr->inst_expr = x;
-          rr->args.insert(rr->args.begin(), x);
-          x = rr;
-        } else {
-          if (right->kind != NodeKind::Symbol) {
-            throw err::invalid_syntax(*op);
-          }
+        else {
+          auto right = ps_factor();
           x = new NdExpr(NodeKind::MemberAccess, *op, x, right);
         }
       } else
@@ -722,7 +717,7 @@ namespace fire {
 
     if (eat("(")) {
       if (cur->kind == TokenKind::Identifier && (cur + 1)->text == ":") {
-        nd->is_struct_fields = true;
+        nd->type = NdEnumeratorDef::StructFields;
         do {
           Token* mb_name = expect_ident();
           expect(":");
@@ -736,7 +731,7 @@ namespace fire {
       auto type = ps_type_name();
 
       if (eat(",")) {
-        nd->is_type_names = true;
+        nd->type = NdEnumeratorDef::MultipleTypes;
         nd->multiple.push_back(type);
         do {
           nd->multiple.emplace_back(ps_type_name());
@@ -745,13 +740,12 @@ namespace fire {
         return nd;
       }
 
-      nd->is_one_type = true;
-      nd->variant_type = type;
+      nd->type = NdEnumeratorDef::OneType;
+      nd->variant = type;
       expect(")");
       return nd;
     }
 
-    nd->is_no_variants = true;
     return nd;
   }
 

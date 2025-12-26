@@ -1,69 +1,39 @@
 #include "Utils.hpp"
-#include "Lexer.hpp"
 #include "Error.hpp"
+
+#include "Lexer.hpp"
 
 namespace fire {
 
-  std::vector<Token> Lexer::lex() {
-    remove_all_comments();
-
-    _pos = 0;
-
-    auto tokens = std::vector<Token>();
+  Token* Lexer::lex() {
+    Token head;
+    Token* cur = &head;
 
     pass_space();
 
-    while (!is_end())
-      tokens.emplace_back(tokenize(peek()));
+    while (!is_end()) {
+      cur = tokenize(peek(), cur);
+    }
 
-    tokens.emplace_back(TokenKind::Eof, "", &_source, _pos);
-
-    for (size_t i = 0; i < tokens.size(); i++)
-      tokens[i].index = i;
+    cur = new Token(TokenKind::Eof, std::string_view(), cur, _source, _pos);
 
     size_t i = 0, line = 1, col = 1;
-    for (auto& t : tokens) {
-      for (; i < t.pos; i++, col++)
-        if (_source[i] == '\n') line++, col = 0;
 
-      t.line = line;
-      t.column = col;
+    for (Token* t = cur; t; t = t->next) {
+      for (; i < t->pos; i++, col++)
+        if (get_char(i) == '\n') line++, col = 0;
+      t->line = line;
+      t->column = col;
     }
 
-    return tokens;
+    return head.next;
   }
 
-  void Lexer::remove_all_comments() {
-    while (_pos < _len) {
-      if (match("//")) {
-        replace(2, ' ');
-        _pos += 2;
-        while (!is_end() && !match("\n")) {
-          replace(1, ' ');
-          _pos++;
-        }
-      } else if (match("/*")) {
-        replace(2, ' ');
-        _pos += 2;
-        while (!is_end()) {
-          if (match("*/")) {
-            replace(2, ' ');
-            break;
-          }
-          replace(1, ' ');
-          _pos++;
-        }
-      } else {
-        _pos++;
-      }
-    }
-  }
-
-  Token Lexer::tokenize(char c) {
+  Token* Lexer::tokenize(char c, Token* prev) {
     pass_space();
 
     TokenKind kind = TokenKind::Unknown;
-    char const* str = _source.data.data() + _pos;
+    char const* str = _source->data + _pos;
     size_t len = 0;
     size_t pos = _pos;
 
@@ -81,7 +51,7 @@ namespace fire {
         if (peek() == 'f') _pos++, len++;
       }
       pass_space();
-      return Token(kind, std::string(str, len), &_source, pos);
+      return new Token(kind, std::string(str, len), prev, _source, pos);
     }
 
     // a-z|A-Z|_
@@ -90,7 +60,7 @@ namespace fire {
       while (!is_end() && (std::isalnum((c = peek())) || c == '_'))
         _pos++, len++;
       pass_space();
-      return Token(kind, std::string(str, len), &_source, pos);
+      return new Token(kind, std::string(str, len), prev, _source, pos);
     }
 
     // char or string
@@ -103,12 +73,24 @@ namespace fire {
         if (x == '\\') {
           _pos++;
           switch (peek()) {
-            case '0': x = 0; break;
-            case 't': x = '\t'; break;
-            case 'r': x = '\r'; break;
-            case 'n': x = '\n'; break;
-            case 'b': x = '\b'; break;
-            default: alert; throw 10;
+            case '0':
+              x = 0;
+              break;
+            case 't':
+              x = '\t';
+              break;
+            case 'r':
+              x = '\r';
+              break;
+            case 'n':
+              x = '\n';
+              break;
+            case 'b':
+              x = '\b';
+              break;
+            default:
+              alert;
+              throw 10;
           }
         }
         ss += x;
@@ -120,7 +102,7 @@ namespace fire {
       }
       _pos++;
       pass_space();
-      return Token(kind, ss + c, &_source, pos);
+      return new Token(kind, ss + c, prev, _source, pos);
     }
 
     // punctuator
@@ -137,11 +119,12 @@ namespace fire {
       if (match(s)) {
         _pos += s.length();
         pass_space();
-        return Token(TokenKind::Punctuator, s, &_source, pos);
+        return new Token(TokenKind::Punctuator, s, prev, _source, pos);
       }
     }
 
-    throw err::invalid_token(Token(TokenKind::Unknown, std::string(1, c), &_source, pos));
+    throw err::invalid_token(
+        *(new Token(TokenKind::Unknown, std::string(1, c), prev, _source, pos)));
   }
 
 } // namespace fire

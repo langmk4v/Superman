@@ -19,8 +19,15 @@ namespace fire {
   extern BuiltinFunc blt_print;
   extern BuiltinFunc blt_println;
 
+  extern BuiltinFunc bltm_string_starts;
+
   static constexpr BuiltinFunc const* builtin_func_table[] = {
       &blt_print,
       &blt_println,
+  };
+
+  static constexpr BuiltinFunc const* builtin_method_table[] = {
+    // string::starts(self, string) -> bool
+    &bltm_string_starts,
   };
 } // namespace fire
