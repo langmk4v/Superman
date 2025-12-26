@@ -31,6 +31,8 @@ namespace fire {
     bool is_ref = false;
     bool is_const = false;
 
+    bool is_var_arg_functor = false; // if TypeKind::Function
+
     NdClass* class_node = nullptr;
     NdEnum* enum_node = nullptr;
 

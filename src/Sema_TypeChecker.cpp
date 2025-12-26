@@ -121,8 +121,11 @@ namespace fire {
 
     size_t argc_take = callee_ty.parameters.size() - 1;
 
-    if (argc_take != argc_give) {
-      todo; // argument count mismatch
+    if ( !callee_ty.is_var_arg_functor && argc_take < argc_give) {
+      throw err::too_many_arguments(cf->args[argc_take]->token);
+    }
+    else if(argc_take > argc_give) {
+      throw err::too_few_arguments(cf->args[argc_take]->token);
     }
 
     for (size_t i = 0; i < argc_take; i++) {
@@ -198,11 +201,11 @@ namespace fire {
     }
 
   #ifdef _FIRE_DEBUG_
-    err::e(
-      node->token,
-      format("### eval_expr_ty node=%p (kind=%d) (ctx = {%s})",
-          node, static_cast<int>(node->kind), NdVisitorContext::ctx2s(ctx).c_str()),
-      ET_Note).print();
+    // err::e(
+    //   node->token,
+    //   format("### eval_expr_ty node=%p (kind=%d) (ctx = {%s})",
+    //       node, static_cast<int>(node->kind), NdVisitorContext::ctx2s(ctx).c_str()),
+    //   ET_Note).print();
   #endif
 
     switch (node->kind) {
@@ -252,10 +255,11 @@ namespace fire {
             todo;
 
           case SymbolKind::Module:
-            todo;
+            todo; // !?!?
 
           case SymbolKind::BuiltinFunc:
-            todo;
+            node->ty = sym->symbol_ptr->type;
+            break;
 
           default:
             todo;
@@ -374,7 +378,6 @@ namespace fire {
       case NodeKind::GetTupleElement: {
         auto ge = node->as<NdGetTupleElement>();
         auto obj_ty = eval_expr_ty(ge->expr, ctx);
-        alert;
         if (!obj_ty.is(TypeKind::Tuple)) {
           throw err::mismatched_types(ge->token, "tuple", obj_ty.to_string());
         }

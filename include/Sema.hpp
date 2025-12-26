@@ -43,6 +43,8 @@ namespace fire {
   struct VariableInfo;
   struct Scope;
 
+  struct BuiltinFunc;
+
   struct Symbol {
     std::string name = "";
     SymbolKind kind = SymbolKind::Unknown;
@@ -50,6 +52,7 @@ namespace fire {
     Node* node = nullptr;
     Token* token = nullptr;
     VariableInfo* var_info = nullptr;
+    BuiltinFunc const* builtin_f = nullptr;
     Scope* scope = nullptr;
   };
 
@@ -376,10 +379,6 @@ namespace fire {
     static void analyze_all(NdModule* mod);
 
     void analyze_full(NdModule* mod);
-
-    void infer_types(Node* node);
-
-    void check_semantics(Node* node);
 
     Symbol* new_variable_symbol(NdLet* let);
 

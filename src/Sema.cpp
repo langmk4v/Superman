@@ -5,6 +5,8 @@
 
 #include "Sema.hpp"
 
+#include "BuiltinFunc.hpp"
+
 namespace fire {
 
   static Sema* __inst = nullptr;
@@ -52,20 +54,6 @@ namespace fire {
 
     alert;
     checker.check_module(mod, {});
-
-    alert;
-    infer_types(mod);
-
-    alert;
-    check_semantics(mod);
-  }
-
-  void Sema::infer_types(Node* node) {
-    (void)node;
-  }
-
-  void Sema::check_semantics(Node* node) {
-    (void)node;
   }
 
   Symbol* Sema::new_variable_symbol(NdLet* let) {
@@ -118,7 +106,24 @@ namespace fire {
               .kind = SymbolKind::BuiltinType,
               .type = TypeInfo(kind),
           });
-          break;
+          return result;
+        }
+      }
+
+      // find builtin funcs
+      for (auto& func : builtin_func_table) {
+        if (func->name == node->name.text) {
+          TypeInfo ty = TypeInfo(TypeKind::Function);
+          ty.parameters = func->arg_types;
+          ty.parameters.insert(ty.parameters.begin(), func->result_type);
+          ty.is_var_arg_functor = func->is_var_args;
+          result.hits.push_back( node->symbol_ptr = new Symbol{
+              .name = func->name,
+              .kind = SymbolKind::BuiltinFunc,
+              .type = ty,
+              .builtin_f = func,
+          });
+          return result;
         }
       }
 

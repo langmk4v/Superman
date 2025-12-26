@@ -57,6 +57,7 @@
 #else
 #define assert(x) ((void)0)
 #define alert ((void)0)
+#define alertexpr(x) ((void)0)
 #define debug(...)
 #define printd(...)
 #define printdf(...)
