@@ -1,6 +1,5 @@
 #pragma once
 
-#include <string>
 #include <vector>
 
 namespace fire {
@@ -20,6 +19,7 @@ namespace fire {
     Tuple,
     Dict,
     Function,
+    Any,
     Class, // => クラス名、インスタンスどちらにも使用
     Enum,
   };
@@ -30,6 +30,8 @@ namespace fire {
 
     bool is_ref = false;
     bool is_const = false;
+
+    bool is_var_arg_functor = false; // if TypeKind::Function
 
     NdClass* class_node = nullptr;
     NdEnum* enum_node = nullptr;

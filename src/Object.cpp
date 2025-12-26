@@ -25,7 +25,7 @@ namespace fire {
     }
 
     case TypeKind::String:
-      return utf16_to_utf8_cpp(as<ObjString>()->val.data());
+      return utf16_to_utf8_len_cpp(as<ObjString>()->data.data(), as<ObjString>()->data.size());
 
     default:
       todoimpl;

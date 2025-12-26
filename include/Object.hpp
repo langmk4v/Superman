@@ -64,12 +64,33 @@ namespace fire {
   };
 
   struct ObjString : Object {
-    std::u16string val;
-    ObjString& append(char16_t c);
-    ObjString& append(std::u16string const& c);
-    Object* clone() const override { return new ObjString(val); }
-    ObjString(std::u16string const& s) : Object(TypeKind::String), val(s) {}
-    ObjString(ObjChar* ch) : Object(TypeKind::String), val(std::u16string(1, ch->val)) {}
+    std::vector<char16_t> data;
+
+    ObjString& append(ObjChar*);
+    ObjString& append(ObjString*);
+    
+    Object* clone() const override { return new ObjString(data); }
+
+    static ObjString* from_char16_ptr_move(char16_t* p) {
+      auto x = new ObjString();
+      for(;*p;p++)x->data.push_back(*p);
+      return x;
+    }
+    
+    ObjString():Object(TypeKind::String){}
+    ObjString(std::vector<char16_t> const& s) : Object(TypeKind::String), data(s) {}
+    ObjString(ObjChar* ch) : Object(TypeKind::String), data(std::vector<char16_t>(1, ch->val)) {}
+  };
+
+  struct ObjVector : Object {
+    std::vector<Object*> data;
+    Object* clone() const override { return new ObjVector(data); }
+    ObjVector(std::vector<Object*> const& v) : Object(TypeKind::Vector), data(v) {}
+    ObjVector() : Object(TypeKind::Vector) {}
+    ObjVector& append(Object* value) {
+      data.push_back(value);
+      return *this;
+    }
   };
 
 } // namespace fire

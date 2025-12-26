@@ -10,5 +10,5 @@ var k = Kind::D(1, "aiueo");
 fn main() -> int {
     var tu = (1, "a");
 
-    println(tu.<10>);
+    println(tu.<1>);
 }

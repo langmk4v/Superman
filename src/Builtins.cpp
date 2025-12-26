@@ -34,7 +34,16 @@ namespace fire {
   IMPL(string_starts) {
     ObjString* self = args[0]->as<ObjString>();
     ObjString* prefix = args[1]->as<ObjString>();
-    return new ObjBool(std::memcmp(self->val.data(), prefix->val.data(), prefix->val.length() * sizeof(char16_t)) == 0);
+    return new ObjBool(std::memcmp(self->data.data(), prefix->data.data(), prefix->data.size() * sizeof(char16_t)) == 0);
+  }
+
+  //
+  // vector::append(self, value) -> vector
+  //
+  IMPL(vector_append) {
+    ObjVector* self = args[0]->as<ObjVector>();
+    self->append(args[1]);
+    return self;
   }
 
   BuiltinFunc blt_print{
@@ -54,9 +63,20 @@ namespace fire {
   BuiltinFunc bltm_string_starts{
     .name = "starts",
     .is_var_args = false,
-    .arg_types = {TypeKind::String, TypeKind::String},
+    .self_type = TypeKind::String,
+    .arg_types = { TypeKind::String },
     .result_type = TypeKind::Bool,
     .impl = impl_string_starts,
+  };
+
+  BuiltinFunc bltm_vector_append{
+    .name = "append",
+    .is_var_args = false,
+    .self_type = TypeKind::Vector,
+    .arg_types = { TypeKind::Any },
+    .result_type = TypeKind::Vector,
+    .returning_self = true,
+    .impl = impl_vector_append,
   };
 
 } // namespace fire

@@ -59,6 +59,19 @@
         "charconv": "cpp",
         "cinttypes": "cpp",
         "variant": "cpp",
-        "locale": "cpp"
+        "locale": "cpp",
+        "strstream": "cpp",
+        "complex": "cpp",
+        "condition_variable": "cpp",
+        "list": "cpp",
+        "map": "cpp",
+        "source_location": "cpp",
+        "mutex": "cpp",
+        "semaphore": "cpp",
+        "shared_mutex": "cpp",
+        "stop_token": "cpp",
+        "thread": "cpp",
+        "typeindex": "cpp",
+        "valarray": "cpp"
     }
 }

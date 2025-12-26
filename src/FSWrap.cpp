@@ -8,7 +8,9 @@
 namespace fire {
 
   void FileSystem::SetCwd(std::string const& path) {
-    chdir(path.c_str());
+    if(chdir(path.c_str()) != 0){
+      throw std::runtime_error("failed to set cwd: " + path);
+    }
   }
 
   std::string FileSystem::GetCwd() {

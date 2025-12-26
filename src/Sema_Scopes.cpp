@@ -1,4 +1,4 @@
-#include "Sema/Sema.hpp"
+#include "Sema.hpp"
 
 namespace fire {
 

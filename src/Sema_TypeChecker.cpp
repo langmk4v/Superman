@@ -1,11 +1,52 @@
 #include "Utils.hpp"
 #include "Error.hpp"
 #include "Node.hpp"
-#include "Sema/Sema.hpp"
+#include "Sema.hpp"
+#include "BuiltinFunc.hpp"
 
 #define PRINT_LOCATION(TOK) (err::e(TOK, "node").print())
 
 namespace fire {
+
+  TypeChecker::ArgumentsCompareResult TypeChecker::compare_arguments(
+      NdCallFunc* cf, NdFunction* fn, BuiltinFunc const* builtin,
+      bool is_var_arg, bool is_method_call,
+      TypeInfo& self_ty, std::vector<TypeInfo> const& defs, std::vector<TypeInfo>& actual) {
+
+    (void)cf;
+    (void)fn;
+    (void)builtin;
+    (void)is_var_arg;
+    (void)is_method_call;
+    (void)self_ty;
+
+    // defs   = 定義側
+    // actual = 呼び出し側
+
+    ArgumentsCompareResult result { };
+
+    if (defs.size() < actual.size()){
+      if(!is_var_arg)
+        result.flags |= ArgumentsCompareResult::TooMany;
+    }
+    else if (defs.size() > actual.size()){
+      result.flags |= ArgumentsCompareResult::TooFew;
+    }
+
+    for(size_t i = 0; i < defs.size(); i++){
+      if(defs[i].kind == TypeKind::Any){
+        continue;
+      }
+
+      if(!defs[i].equals(actual[i])){
+        result.flags |= ArgumentsCompareResult::TypeMismatch;
+        result.mismatched_index = i;
+        break;
+      }
+    }
+
+    return result;
+  }
 
   TypeInfo TypeChecker::case_call_func(NdCallFunc* cf, NdVisitorContext ctx) {
     // get argument types
@@ -28,14 +69,42 @@ namespace fire {
     ctx.parent_cf_nd = cf;
 
     if(cf->is_method_call){
-      alert;
       self_ty = eval_expr_ty(cf->inst_expr, ctx);
-      todo;
-      is_method_call = true;
-      todo;
+      ctx.self_ty_ptr = &self_ty;
+
+      std::string const method_name { cf->callee->token.text };
+
+      if(self_ty.is(TypeKind::Class) || self_ty.is(TypeKind::Enum)){
+        todo;
+      }
+
+      for(BuiltinFunc const* method : builtin_method_table ){
+        if(method->name == method_name && method->self_type.kind == self_ty.kind){
+          auto cmp = compare_arguments(
+            cf, nullptr, method, method->is_var_args, true, self_ty, method->arg_types, arg_types);
+
+          if(cmp.flags & ArgumentsCompareResult::TypeMismatch){
+            throw err::mismatched_types(cf->args[cmp.mismatched_index]->token,
+                method->arg_types[cmp.mismatched_index].to_string(), arg_types[cmp.mismatched_index].to_string());
+          }
+
+          if(cmp.flags & ArgumentsCompareResult::TooMany){
+            throw err::too_many_arguments(cf->args[cmp.mismatched_index]->token);
+          }
+
+          if(cmp.flags & ArgumentsCompareResult::TooFew){
+            throw err::too_few_arguments(cf->args[cmp.mismatched_index]->token);
+          }
+
+          cf->ty = method->returning_self ? self_ty : method->result_type;
+
+          return cf->ty;
+        }
+      }
+
+      throw err::e(cf->callee->token, "method '" + method_name + "' not found in '" + self_ty.to_string() + "'");
     }
 
-    ctx.self_ty_ptr = &self_ty;
 
     auto callee_ty = eval_expr_ty(cf->callee, ctx); // callee_ty = { result_type, [args...] }
 
@@ -52,8 +121,11 @@ namespace fire {
 
     size_t argc_take = callee_ty.parameters.size() - 1;
 
-    if (argc_take != argc_give) {
-      todo; // argument count mismatch
+    if ( !callee_ty.is_var_arg_functor && argc_take < argc_give) {
+      throw err::too_many_arguments(cf->args[argc_take]->token);
+    }
+    else if(argc_take > argc_give) {
+      throw err::too_few_arguments(cf->args[argc_take]->token);
     }
 
     for (size_t i = 0; i < argc_take; i++) {
@@ -122,12 +194,19 @@ namespace fire {
   }
 
   TypeInfo TypeChecker::eval_expr_ty(Node* node, NdVisitorContext ctx) {
-    (void)node;
-    (void)ctx;
+    ctx.node = node;
 
-    // if (node->ty_evaluated) {
-    //   return node->ty;
-    // }
+    if (node->ty_evaluated) {
+      return node->ty;
+    }
+
+  #ifdef _FIRE_DEBUG_
+    // err::e(
+    //   node->token,
+    //   format("### eval_expr_ty node=%p (kind=%d) (ctx = {%s})",
+    //       node, static_cast<int>(node->kind), NdVisitorContext::ctx2s(ctx).c_str()),
+    //   ET_Note).print();
+  #endif
 
     switch (node->kind) {
       case NodeKind::Value:
@@ -176,10 +255,11 @@ namespace fire {
             todo;
 
           case SymbolKind::Module:
-            todo;
+            todo; // !?!?
 
           case SymbolKind::BuiltinFunc:
-            todo;
+            node->ty = sym->symbol_ptr->type;
+            break;
 
           default:
             todo;
@@ -298,14 +378,13 @@ namespace fire {
       case NodeKind::GetTupleElement: {
         auto ge = node->as<NdGetTupleElement>();
         auto obj_ty = eval_expr_ty(ge->expr, ctx);
-        alert;
         if (!obj_ty.is(TypeKind::Tuple)) {
           throw err::mismatched_types(ge->token, "tuple", obj_ty.to_string());
         }
         if (ge->index < 0 || ge->index >= (int)obj_ty.parameters.size()) {
           err::emitters::tuple_getter_index_out_of_range(*ge->index_tok, ge->expr->token,
                                                          obj_ty.to_string(), ge->index,
-                                                         obj_ty.parameters.size());
+                                                         (int)obj_ty.parameters.size());
         }
         node->ty = obj_ty.parameters[ge->index];
         break;
@@ -457,6 +536,11 @@ namespace fire {
 
   void TypeChecker::check_stmt(Node* node, NdVisitorContext ctx) {
     switch (node->kind) {
+      case NodeKind::Scope: {
+        check_scope(node->as<NdScope>(), ctx);
+        break;
+      }
+
       case NodeKind::Let: {
         auto let = node->as<NdLet>();
 
@@ -556,6 +640,7 @@ namespace fire {
       }
 
       default:
+        alertexpr(static_cast<int>(node->kind));
         assert(node->is_expr_full());
         check_expr(node, ctx);
         break;
@@ -581,6 +666,8 @@ namespace fire {
   void TypeChecker::check_function(NdFunction* node, NdVisitorContext ctx) {
 
     auto fn_scope = node->scope_ptr->as<SCFunction>();
+
+    (void)fn_scope;
 
     for (auto& arg : node->args) {
       arg.type->ty = eval_typename_ty(arg.type, ctx);

@@ -168,7 +168,7 @@ namespace fire {
       }
 
       case TokenKind::String: {
-        v->obj = new ObjString(utf8_to_utf16_len_cpp(cur->text.data()+1, cur->text.length()-2));
+        v->obj = ObjString::from_char16_ptr_move(utf8_to_utf16_with_len(nullptr,cur->text.data()+1, cur->text.length()-2));
         next();
         break;
       }
@@ -232,7 +232,7 @@ namespace fire {
           if (cur->kind != TokenKind::Int) {
             throw err::expected_but_found(*cur, "int");
           }
-          x = new NdGetTupleElement(tok, x, atol(cur->text.data()));
+          x = new NdGetTupleElement(tok, x, std::atoi(cur->text.data()));
           x->as<NdGetTupleElement>()->index_tok = cur;
           next();
           expect(">");

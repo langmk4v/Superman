@@ -1,4 +1,4 @@
-#include "Sema/Sema.hpp"
+#include "Sema.hpp"
 #include "Error.hpp"
 #include "Utils.hpp"
 
@@ -17,6 +17,17 @@ namespace fire {
   }
 
   void NameResolver::on_expr(Node* node, NdVisitorContext ctx) {
+
+    ctx.node = node;
+
+  #ifdef _FIRE_DEBUG_
+    // err::e(
+    //   node->token,
+    //   format("### on_expr node=%p (kind=%d) (ctx = {%s})",
+    //     node, static_cast<int>(node->kind), NdVisitorContext::ctx2s(ctx).c_str()),
+    //   ET_Note).print();
+  #endif
+
     switch (node->kind) {
       case NodeKind::Symbol: {
         auto sym = node->as<NdSymbol>();
@@ -59,8 +70,15 @@ namespace fire {
 
       case NodeKind::Slice: {
         auto slice = node->as<NdExpr>();
-        on_expr(slice->lhs, ctx);
-        on_expr(slice->rhs, ctx);
+        if(slice->lhs)on_expr(slice->lhs, ctx);
+        if(slice->rhs)on_expr(slice->rhs, ctx);
+        break;
+      }
+
+      case NodeKind::Subscript: {
+        auto subscript = node->as<NdExpr>();
+        on_expr(subscript->lhs, ctx);
+        on_expr(subscript->rhs, ctx);
         break;
       }
 
@@ -76,6 +94,10 @@ namespace fire {
 
       case NodeKind::CallFunc: {
         auto call = node->as<NdCallFunc>();
+
+        if(call->is_method_call){
+          on_expr(call->inst_expr, ctx);
+        }
 
         on_expr(call->callee, ctx);
 
