@@ -10,9 +10,9 @@
 #include "SourceFile.hpp"
 
 namespace fire {
-  std::unordered_map<std::string, SourceCode*> all_sources;
+  std::unordered_map<std::string, SourceFile*> all_sources;
 
-  SourceCode::SourceCode(std::string const& _path) : path(std::filesystem::absolute(_path)) {
+  SourceFile::SourceFile(std::string const& _path) : path(std::filesystem::absolute(_path)) {
     auto ifs = std::ifstream(this->path);
 
     if (ifs.fail()) {
@@ -26,20 +26,20 @@ namespace fire {
     all_sources[this->path] = this;
   }
 
-  NdModule* SourceCode::parse() {
-    this->tokens = Lexer(*this).lex();
+  NdModule* SourceFile::parse() {
+    this->lexed_token = Lexer(this).lex();
 
-    this->parsed_mod = Parser(*this, this->tokens).parse();
+    this->parsed_mod = Parser(*this, this->lexed_token).parse();
 
     return this->parsed_mod;
   }
 
   //
   // import a file
-  SourceCode* SourceCode::import(std::string const& _path) {
+  SourceFile* SourceFile::import(std::string const& _path) {
     if (all_sources.find(_path) != all_sources.end()) { return all_sources[_path]; }
 
-    auto new_source = new SourceCode(_path);
+    auto new_source = new SourceFile(_path);
 
     new_source->parent = this;
 
@@ -50,7 +50,7 @@ namespace fire {
 
   //
   // import a directory
-  void SourceCode::import_directory(std::string const& _path) {
+  void SourceFile::import_directory(std::string const& _path) {
     //
     // get all files in the directory
     for (auto& entry : std::filesystem::directory_iterator(_path)) {
@@ -62,11 +62,11 @@ namespace fire {
     }
   }
 
-  std::string SourceCode::get_folder() const {
+  std::string SourceFile::get_folder() const {
     return path.substr(0, path.find_last_of('/') + 1);
   }
 
-  size_t SourceCode::get_depth() const {
+  size_t SourceFile::get_depth() const {
     return parent ? parent->get_depth() + 1 : 0;
   }
 

@@ -17,7 +17,7 @@ namespace fire::err {
   }
 
   e* e::print(bool show_file_loc) {
-    size_t begin = 0, end = s.get_len();
+    size_t begin = 0, end = s.length;
 
     for (size_t i = 0; i <= pos; i++)
       if (s[i] == '\n')
@@ -38,10 +38,11 @@ namespace fire::err {
       std::cout << COL_LIGHT_GREEN << " -> " << s.path << ":" << line << ":" << column
                 << COL_DEFAULT << std::endl;
 
-    std::cout << "  " << linenum_s << " | " << s.data.substr(begin, end - begin) << std::endl
-              << "  " << std::string(linenum_s.length(), ' ') << " |" << std::string(column, ' ')
-              << "^" << std::endl
-              << std::endl;
+    std::cout 
+      << "  " << linenum_s << " | " << std::string_view(s.data.data() + begin, end - begin) << std::endl
+      << "  " << std::string(linenum_s.length(), ' ') << " |" << std::string(column, ' ')
+      << "^" << std::endl
+      << std::endl;
 
     return this;
   }

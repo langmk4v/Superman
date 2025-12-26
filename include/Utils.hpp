@@ -4,7 +4,9 @@
 #include <vector>
 #include <locale>
 #include <codecvt>
+
 #include <cstdio>
+#include <cstring>
 
 #define _COL_RGB(r, g, b) "\e[38;2;" #r ";" #g ";" #b "m"
 
@@ -95,5 +97,17 @@ namespace fire {
       if (i < v.size() - 1) s += sep;
     }
     return s;
+  }
+
+  static inline std::string operator+(std::string_view a, char const* b) {
+    return std::string(a) + b;
+  }
+
+  static inline std::string operator+(char const* a, std::string_view b) {
+    return a + std::string(b);
+  }
+
+  static inline std::string operator+(std::string_view a, std::string_view b) {
+    return std::string(a) + std::string(b);
   }
 } // namespace fire

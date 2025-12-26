@@ -26,9 +26,11 @@ namespace fire {
 
     char get_char(size_t pos) { return (*_source)[pos]; }
 
+    char const* getptr() { return _source->data.data() + _pos; }
+
     bool match(std::string_view s) {
       return _pos + s.length() <= _len &&
-             std::strncmp(_source->data + _pos, s.data(), s.length()) == 0;
+             std::strncmp(_source->data.data() + _pos, s.data(), s.length()) == 0;
     }
 
     bool consume(std::string_view s) { return match(s) ? (_pos += s.length(), true) : false; }

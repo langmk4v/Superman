@@ -58,6 +58,7 @@
         "cstring": "cpp",
         "charconv": "cpp",
         "cinttypes": "cpp",
-        "variant": "cpp"
+        "variant": "cpp",
+        "locale": "cpp"
     }
 }

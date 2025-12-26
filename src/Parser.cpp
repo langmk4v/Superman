@@ -6,6 +6,8 @@
 #include "Error.hpp"
 #include "FileSystem.hpp"
 
+#include "strconv.h"
+
 namespace fire {
 
   NdSymbol* Parser::ps_symbol(bool as_typename) {
@@ -145,17 +147,18 @@ namespace fire {
 
     switch (cur->kind) {
       case TokenKind::Int:
-        v->obj = new ObjInt(std::stoll(cur->text));
+        v->obj = new ObjInt(std::atoll(cur->text.data()));
         cur++;
         break;
 
       case TokenKind::Float:
-        v->obj = new ObjFloat(std::stold(cur->text));
+        v->obj = new ObjFloat(std::atof(cur->text.data()));
         cur++;
         break;
 
       case TokenKind::Char: {
-        auto s16 = to_utf16(cur->text.substr(1, cur->text.size() - 2));
+        std::u16string s16 = utf8_to_utf16_len_cpp(cur->text.data() + 1, cur->text.length() - 2);
+
         if (s16.empty() || s16.size() > 1) {
           throw err::invalid_character_literal(*cur);
         }
@@ -164,10 +167,11 @@ namespace fire {
         break;
       }
 
-      case TokenKind::String:
-        v->obj = new ObjString(to_utf16(cur->text.substr(1, cur->text.size() - 2)));
+      case TokenKind::String: {
+        v->obj = new ObjString(utf8_to_utf16_len_cpp(cur->text.data()+1, cur->text.length()-2));
         cur++;
         break;
+      }
 
       default:
         throw err::invalid_syntax(*cur);
@@ -228,7 +232,7 @@ namespace fire {
           if (cur->kind != TokenKind::Int) {
             throw err::expected_but_found(*cur, "int");
           }
-          x = new NdGetTupleElement(tok, x, std::stoll(cur->text));
+          x = new NdGetTupleElement(tok, x, atol(cur->text.data()));
           x->as<NdGetTupleElement>()->index_tok = cur;
           cur++;
           expect(">");
@@ -777,7 +781,7 @@ namespace fire {
   NdNamespace* Parser::ps_namespace() {
     Token* tok = expect("namespace");
 
-    std::string name = expect_ident()->text;
+    std::string name {expect_ident()->text};
 
     NdNamespace* ns = new NdNamespace(*tok, name);
 
@@ -834,7 +838,7 @@ namespace fire {
 
     auto import_token = cur;
 
-    std::string path = expect_ident()->text;
+    std::string path{expect_ident()->text};
 
     while (!is_end() && eat("::")) {
       path += "/";

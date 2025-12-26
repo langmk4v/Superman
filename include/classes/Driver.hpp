@@ -6,7 +6,7 @@
 
 namespace fire {
   class Driver {
-    std::vector<SourceCode*> inputs;
+    std::vector<SourceFile*> inputs;
 
     std::string cwd; // at start of the program
 

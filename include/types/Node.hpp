@@ -2,6 +2,8 @@
 
 #include <vector>
 
+#include "Utils.hpp"
+
 #include "Lexer.hpp"
 #include "Token.hpp"
 #include "Object.hpp"

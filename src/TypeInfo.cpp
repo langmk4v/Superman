@@ -12,7 +12,8 @@ namespace fire {
     if (parameters.size() != t.parameters.size())
       return false;
 
-    for (auto x = parameters.begin(); auto&& y : t.parameters) {
+    auto x = parameters.begin();
+    for (auto&& y : t.parameters) {
       if (!y.equals(*x++))
         return false;
     }

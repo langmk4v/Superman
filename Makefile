@@ -39,7 +39,7 @@ COMMONFLAGS		:=	\
 
 FLAGS_C			:=	$(COMMONFLAGS) -std=c23
 FLAGS_CXX		:=	$(COMMONFLAGS) -std=c++17 -Wno-packed-non-pod
-FLAGS_LD		:=	-Wl,--gc-sections,-s -fuse=mold
+FLAGS_LD		:=	-Wl,--gc-sections,-s -fuse=mold -fsanitize=leak
 
 %.o: %$(EXT_ASM)
 	@echo "\e[1m\e[32mCOMPILE \e[37m$<\e[0m ..."

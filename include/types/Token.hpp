@@ -112,4 +112,10 @@ namespace fire {
 
     static TokenPunctuators get_punct(char const* str);
   };
+
+  struct _token_punct_str_map_ {
+    TokenPunctuators punct;
+    char const* str;
+  };
+
 } // namespace fire

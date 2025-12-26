@@ -9,13 +9,9 @@
 #include "Token.hpp"
 
 namespace fire {
-  struct punct_str_map {
-    TokenPunctuators punct;
-    char const* str;
-  };
 
   // clang-format off
-  static punct_str_map table[] = {
+  _token_punct_str_map_ const table[] = {
     //
     // この配列内の要素は文字列の長さ順で定義すること
     //
@@ -71,6 +67,10 @@ namespace fire {
     { TokenPunctuators::Punct_Backtick, "`" },
     { TokenPunctuators::Punct_Tilde, "~" },
   };
+
+  _token_punct_str_map_ const* _psmap_table_pointer_ = table;
+
+  volatile size_t _psmap_table_size_ = std::size(table);
   // clang-format on
 
   TokenPunctuators Token::get_punct(char const* s) {
@@ -92,7 +92,7 @@ namespace fire {
   }
 
   class _debug_class_ {
-  private:
+  public:
     _debug_class_() { check_duplications(); }
   };
 

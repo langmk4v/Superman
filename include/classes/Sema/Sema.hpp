@@ -153,7 +153,7 @@ namespace fire {
 
     Symbol* new_variable_symbol(NdLet* let);
 
-    Symbol* new_variable_symbol(Token* tok, std::string const& name);
+    Symbol* new_variable_symbol(Token* tok, std::string_view name);
 
   private:
     Sema();

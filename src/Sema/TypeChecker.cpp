@@ -73,28 +73,28 @@ namespace fire {
 
   TypeInfo TypeChecker::case_construct_enumerator(NdCallFunc* cf, NdEnumeratorDef* en_def, TypeInfo& callee_ty, size_t argc_give, std::vector<TypeInfo>& arg_types, NdVisitorContext ctx) {
     // no-variants
-    if (en_def->is_no_variants) {
+    if (en_def->type==NdEnumeratorDef::NoVariants) {
       err::emitters::enumerator_no_have_variants(cf->args[0]->token, en_def);
     }
 
     // one variant
-    else if (en_def->is_one_type) {
+    else if (en_def->type==NdEnumeratorDef::OneType) {
       if (argc_give == 0) {
         err::emitters::expected_one_variant_for_enumerator(cf->args[0]->token, en_def);
       } else if (argc_give >= 2) {
         err::emitters::too_many_variants_for_enumerator(cf->args[0]->token, en_def);
       } else if (argc_give == 1) {
         ctx = {};
-        if (!arg_types[0].equals(eval_expr_ty(en_def->variant_type, ctx))) {
+        if (!arg_types[0].equals(eval_expr_ty(en_def->variant, ctx))) {
           throw err::mismatched_types(
-              cf->args[0]->token, eval_typename_ty(en_def->variant_type, ctx).to_string(),
+              cf->args[0]->token, eval_typename_ty(en_def->variant, ctx).to_string(),
               arg_types[0].to_string());
         }
       }
     }
 
     // multiple variants or struct fields
-    else if (en_def->is_type_names || en_def->is_struct_fields) {
+    else if (en_def->type==NdEnumeratorDef::MultipleTypes || en_def->type==NdEnumeratorDef::StructFields) {
       if (size_t count = en_def->multiple.size(); count > argc_give) {
         err::emitters::too_few_variants_for_enumerator(cf->args[0]->token, en_def);
       } else if (count < argc_give) {

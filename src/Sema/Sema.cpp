@@ -80,10 +80,10 @@ namespace fire {
     return symbol;
   }
 
-  Symbol* Sema::new_variable_symbol(Token* tok, std::string const& name) {
+  Symbol* Sema::new_variable_symbol(Token* tok, std::string_view name) {
     auto symbol = new Symbol();
 
-    symbol->name = name;
+    symbol->name = std::string(name);
     symbol->kind = SymbolKind::Var;
     symbol->token = tok;
 

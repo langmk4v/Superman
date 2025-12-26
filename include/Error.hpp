@@ -15,7 +15,7 @@ namespace fire {
 
   namespace err {
     struct e {
-      SourceCode& s;
+      SourceFile const& s;
       size_t pos;
       size_t len;
       std::string msg;
@@ -219,7 +219,7 @@ namespace fire {
       static inline void expected_one_variant_for_enumerator(Token& tok, NdEnumeratorDef* def) {
         err::e(tok, "expected one variant for enumerator '" + def->get_full_name() + "'", ET_Error)
             .print();
-        err::e(def->variant_type->token, "defined here", ET_Note).print();
+        err::e(def->variant->token, "defined here", ET_Note).print();
       }
 
       static inline void too_few_variants_for_enumerator(Token& tok, NdEnumeratorDef* def) {

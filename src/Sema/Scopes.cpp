@@ -132,7 +132,7 @@ namespace fire {
     node->scope_ptr = this;
 
     symbol = {
-        .name = node->name.text,
+        .name = std::string(node->name.text),
         .kind = SymbolKind::Func,
         .node = node,
         .scope = this,
@@ -154,7 +154,7 @@ namespace fire {
     node->scope_ptr = this;
 
     symbol = {
-        .name = node->name.text,
+        .name = std::string(node->name.text),
         .kind = SymbolKind::Enum,
         .node = node,
         .scope = this,
@@ -178,7 +178,7 @@ namespace fire {
     node->scope_ptr = this;
 
     symbol = {
-        .name = node->name.text,
+        .name = std::string(node->name.text),
         .kind = SymbolKind::Class,
         .node = node,
         .scope = this,

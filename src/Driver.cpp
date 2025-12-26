@@ -42,7 +42,7 @@ namespace fire {
           return -1;
         }
       } else {
-        this->inputs.emplace_back(new SourceCode(arg));
+        this->inputs.emplace_back(new SourceFile(arg));
       }
     }
 

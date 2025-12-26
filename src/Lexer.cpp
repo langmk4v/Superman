@@ -5,6 +5,18 @@
 
 namespace fire {
 
+  extern _token_punct_str_map_ const* _psmap_table_pointer_;
+  extern volatile size_t _psmap_table_size_;
+
+  static _token_punct_str_map_ const* find_punct(char const* ptr) {
+    for (size_t i = 0; i < _psmap_table_size_; i++) {
+      if (std::strncmp(ptr, _psmap_table_pointer_[i].str, std::strlen(_psmap_table_pointer_[i].str)) == 0) {
+        return &_psmap_table_pointer_[i];
+      }
+    }
+    return nullptr;
+  }
+
   Token* Lexer::lex() {
     Token head;
     Token* cur = &head;
@@ -33,7 +45,7 @@ namespace fire {
     pass_space();
 
     TokenKind kind = TokenKind::Unknown;
-    char const* str = _source->data + _pos;
+    char const* str = _source->data.data() + _pos;
     size_t len = 0;
     size_t pos = _pos;
 
@@ -73,24 +85,12 @@ namespace fire {
         if (x == '\\') {
           _pos++;
           switch (peek()) {
-            case '0':
-              x = 0;
-              break;
-            case 't':
-              x = '\t';
-              break;
-            case 'r':
-              x = '\r';
-              break;
-            case 'n':
-              x = '\n';
-              break;
-            case 'b':
-              x = '\b';
-              break;
-            default:
-              alert;
-              throw 10;
+            case '0': x = 0; break;
+            case 't': x = '\t'; break;
+            case 'r': x = '\r'; break;
+            case 'n': x = '\n'; break;
+            case 'b': x = '\b'; break;
+            default: todoimpl;
           }
         }
         ss += x;
@@ -105,26 +105,14 @@ namespace fire {
       return new Token(kind, ss + c, prev, _source, pos);
     }
 
-    // punctuator
-    static char const* _plist[] = {
-        // assign with op
-        ">>=", "<<=", "+=", "-=", "*=", "/=", "%=", "&=", "|=", "^=",
-
-        "##",  "++",  "--", "<<", ">>", "<=", ">=", "==", "!=", "&&", "||", "::", "->", "=>",
-        "#",   "$",   "`",  "+",  "-",  "*",  "/",  "%",  "|",  "&",  "~",  "^",  "=",  ",",
-        ".",   ";",   ":",  "?",  "!",  "(",  ")",  "<",  ">",  "[",  "]",  "{",  "}",
-    };
-
-    for (std::string s : _plist) {
-      if (match(s)) {
-        _pos += s.length();
-        pass_space();
-        return new Token(TokenKind::Punctuator, s, prev, _source, pos);
-      }
+    else if (_token_punct_str_map_ const* p = find_punct(getptr()); p != nullptr) {
+      _pos++;
+      pass_space();
+      return new Token(TokenKind::Punctuator, std::string_view(p->str), prev, _source, pos);
     }
 
     throw err::invalid_token(
         *(new Token(TokenKind::Unknown, std::string(1, c), prev, _source, pos)));
   }
 
-} // namespace fire
+} // namespace fire 

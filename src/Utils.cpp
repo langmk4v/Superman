@@ -216,14 +216,14 @@ namespace fire {
       case NodeKind::EnumeratorDef: {
         auto x = node->as<NdEnumeratorDef>();
         std::stringstream ss;
-        if (x->is_no_variants) {
+        if (x->type == NdEnumeratorDef::NoVariants) {
           ss << x->name.text;
         } else {
           ss << x->name.text << "(";
-          if (x->is_struct_fields || x->is_type_names) {
+          if (x->type==NdEnumeratorDef::MultipleTypes || x->type==NdEnumeratorDef::StructFields) {
             ss << join(", ", x->multiple, node2s);
-          } else if (x->is_one_type) {
-            ss << node2s(x->variant_type);
+          } else {
+            ss << node2s(x->variant);
           }
           ss << ")";
         }

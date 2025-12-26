@@ -1,5 +1,8 @@
 #pragma once
 
+#include <vector>
+#include <string>
+
 #include "FileSystem.hpp"
 
 namespace fire {
@@ -7,10 +10,17 @@ namespace fire {
   struct NdModule;
 
   struct SourceFile {
-    char const* path = nullptr;
+    std::string path;
+    std::string data;
+    size_t length = 0;
 
-    char const* data = nullptr;
-    size_t const length;
+    SourceFile* parent = nullptr;
+    std::vector<SourceFile*> imports;
+
+    bool is_node_imported = false;
+
+    Token* lexed_token = nullptr;
+    NdModule* parsed_mod = nullptr;
 
     SourceFile(std::string const& _path);
 
@@ -22,7 +32,7 @@ namespace fire {
 
     size_t get_depth() const;
 
-    std::string_view get_folder() const;
+    std::string get_folder() const;
 
     char operator[](size_t const _index) const { return data[_index]; }
   };

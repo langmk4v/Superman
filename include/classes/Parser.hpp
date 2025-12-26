@@ -6,17 +6,16 @@
 
 namespace fire {
   class Parser {
-    SourceCode& source;
+    SourceFile& source;
 
-    std::vector<Token>& tokens;
+    Token* _tok_list;
 
     Token* cur;
 
   public:
-    Parser(SourceCode& source, std::vector<Token>& _tokens)
-        : source(source), tokens(_tokens), cur(tokens.data()) {
-      (void)source;
-      (void)tokens;
+    Parser(SourceFile& source, Token* _tok)
+      : source(source), _tok_list(_tok), cur(_tok)
+    {
     }
 
     NdSymbol* ps_symbol(bool as_typename = false);
