@@ -1,6 +1,4 @@
-
-
 ・意味解析
-・FireIR を生成する
-・LLVM-IR に変換する
-・
+・FireIR を生成 ( High -> Middle -> Low )
+・LowIR を命令列に変換
+・命令列からバイナリへ

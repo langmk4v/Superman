@@ -12,8 +12,8 @@ set(FIRE_HEADER_FILES
     include/defs.hpp
     include/Driver.hpp
     include/Error.hpp
-    include/FileSystem.hpp
     include/fs_impl.hpp
+    include/FSHelper.hpp
     include/IR.hpp
     include/Lexer.hpp
     include/logger.h
@@ -37,7 +37,7 @@ set(FIRE_SOURCE_FILES
   src/Driver.cpp
   src/Error.cpp
   src/fs_impl.cpp
-  src/FileSystem.cpp
+  src/FSHelper.cpp
   src/IR.cpp
   src/Lexer.cpp
   src/Lower.cpp
@@ -58,13 +58,26 @@ set(FIRE_SOURCE_FILES
 
 add_executable(fire ${FIRE_SOURCE_FILES} ${FIRE_HEADER_FILES})
 
+if(CMAKE_BUILD_TYPE STREQUAL Release)
+target_compile_options(fire PRIVATE
+  -O3
+  -Ofast
+  -Os
+  -Wall
+  -Wextra
+  -Wno-switch
+  -Wno-unused-variable
+  -Wno-unused-parameter
+)
+else()
 target_compile_options(fire PRIVATE
   -O0
   -g
   -Wall
   -Wextra
   -Wno-switch
-  -fsanitize=memory
+  -D_FIRE_DEBUG_=1
 )
+endif()
 
 target_include_directories(fire PUBLIC include)

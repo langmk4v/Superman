@@ -12,6 +12,7 @@ namespace fire {
 
   public:
     Driver();
+    ~Driver();
 
     static Driver* get_instance();
 

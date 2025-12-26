@@ -3,7 +3,7 @@
 #include <sys/stat.h>
 #include <cstring>
 
-#include "FileSystem.hpp"
+#include "FSHelper.hpp"
 
 namespace fire {
 

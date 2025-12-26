@@ -28,6 +28,27 @@ namespace fire {
     all_sources[this->path] = this;
   }
 
+  SourceFile::~SourceFile() {
+
+    if(lexed_token){
+      for(auto ptoken = lexed_token; ptoken; ){
+        auto nextptr = ptoken->next;
+        delete ptoken;
+        if(nextptr){
+          ptoken=nextptr;
+          continue;
+        }
+        else
+          break;
+      }
+    }
+
+    if(parsed_mod) delete parsed_mod;
+
+    for(auto i : this->imports)
+      delete i;
+  }
+
   Token* SourceFile::lex() {
     if(lexed_token)return lexed_token;
     return lexed_token = Lexer(this).lex();

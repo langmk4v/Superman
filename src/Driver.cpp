@@ -20,6 +20,11 @@ namespace fire {
     __instance = this;
   }
 
+  Driver::~Driver() {
+    for(auto&&s:this->inputs)
+      delete s;
+  }
+
   Driver* Driver::get_instance() {
     return __instance;
   }
@@ -88,6 +93,8 @@ namespace fire {
         Sema::analyze_all(mod);
 
         IR::Low::LIR* low_ir = NodeLower::lower_full(mod);
+
+        (void)low_ir;
 
         // if
         // (!mod->main_fn->scope_ptr->as<FunctionScope>()->result_type.equals(TypeInfo(TypeKind::Int)))

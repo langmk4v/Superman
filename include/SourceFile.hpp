@@ -3,7 +3,7 @@
 #include <vector>
 #include <string>
 
-#include "FileSystem.hpp"
+#include "FSHelper.hpp"
 
 namespace fire {
   struct Token;
@@ -23,6 +23,7 @@ namespace fire {
     NdModule* parsed_mod = nullptr;
 
     SourceFile(std::string const& _path);
+    ~SourceFile();
 
     Token* lex();
 

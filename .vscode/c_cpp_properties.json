@@ -3,15 +3,13 @@
         {
             "name": "Linux",
             "includePath": [
-                "${workspaceFolder}/include/*",
-                "${workspaceFolder}/include/types/*",
-                "${workspaceFolder}/include/classes/*"
+                "${workspaceFolder}/include/**"
             ],
             "defines": [
                 "_FIRE_DEBUG_"
             ],
             "compilerPath": "/usr/bin/clang",
-            "cStandard": "c23",
+            "cStandard": "c17",
             "cppStandard": "c++17",
             "intelliSenseMode": "linux-clang-x64"
         }

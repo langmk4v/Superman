@@ -237,8 +237,18 @@ namespace fire {
             node->ty = sym->symbol_ptr->var_info->type;
             break;
 
-          case SymbolKind::Func:
-            todo;
+          case SymbolKind::Func: {
+            auto fn_scope = sym->symbol_ptr->scope->as<SCFunction>();
+            auto fn_node = fn_scope->node->as<NdFunction>();
+
+            node->ty = TypeInfo(TypeKind::Function);
+            node->ty.parameters = { fn_node->result_type ? eval_typename_ty(fn_node->result_type, ctx) : TypeInfo() };
+
+            for(auto a :fn_node->args)
+              node->ty.parameters.emplace_back(eval_typename_ty(a.type,ctx));
+
+            break;
+          }
 
           case SymbolKind::Enumerator: {
             auto en = sym->symbol_ptr->node->as<NdEnumeratorDef>();
@@ -636,7 +646,7 @@ namespace fire {
       }
 
       case NodeKind::Return: {
-        todo;
+        break;
       }
 
       default:
