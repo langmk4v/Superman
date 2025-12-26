@@ -67,6 +67,7 @@ namespace fire {
   };
 
   enum class ScopeKind {
+    Unknown,
     Scope,
     Try,
     Catch,
@@ -80,7 +81,7 @@ namespace fire {
   };
 
   struct Scope {
-    ScopeKind kind;
+    ScopeKind kind = ScopeKind::Unknown;
 
     Node* node = nullptr;
     Scope* parent = nullptr;
@@ -252,6 +253,30 @@ namespace fire {
     TypeInfo* self_ty_ptr = nullptr;
 
     NdEnumeratorDef** enumerator_node_out = nullptr;
+
+    #ifdef _FIRE_DEBUG_
+    static std::string ctx2s(NdVisitorContext ctx) {
+      std::string flags;
+      flags+=format("node: %p", ctx.node);
+      if(ctx.cur_scope) flags+=format("cur_scope: %p,", ctx.cur_scope);
+      if(ctx.cur_class) flags+=format("cur_class: %p,", ctx.cur_class);
+      if(ctx.cur_func) flags+=format("cur_func: %p,", ctx.cur_func);
+      if(ctx.in_method) flags+=format("in_method: %d", ctx.in_method);
+      if(ctx.empty_array_element_type) flags+=format("empty_array_element_type: %p,", ctx.empty_array_element_type);
+      if(ctx.can_use_empty_array) flags+=format("can_use_empty_array: %d,", ctx.can_use_empty_array);
+      if(ctx.slice_target_array_type) flags+=format("slice_target_array_type: %p,", ctx.slice_target_array_type);
+      if(ctx.loop_depth) flags+=format("loop_depth: %d,", ctx.loop_depth);
+      if(ctx.expected_type) flags+=format("expected_type: %p,", ctx.expected_type);
+      if(ctx.as_typename) flags+=format("as_typename: %d,", ctx.as_typename);
+      if(ctx.as_callee_of_callfunc) flags+=format("as_callee_of_callfunc: %d,", ctx.as_callee_of_callfunc);
+      if(ctx.as_arg_of_callfunc) flags+=format("as_arg_of_callfunc: %d,", ctx.as_arg_of_callfunc);
+      if(ctx.parent_cf_nd) flags+=format("parent_cf_nd: %p,", ctx.parent_cf_nd);
+      if(ctx.self_ty_ptr) flags+=format("self_ty_ptr: %p,", ctx.self_ty_ptr);
+      if(ctx.enumerator_node_out) flags+=format("enumerator_node_out: %p,", ctx.enumerator_node_out);
+      return "{"+flags+"}";
+    }
+  #endif
+
   };
 
   class Sema;

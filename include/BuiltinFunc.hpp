@@ -11,6 +11,7 @@ namespace fire {
 
     char const* name = nullptr;
     bool is_var_args = false;
+    TypeInfo self_type = { };
     std::vector<TypeInfo> arg_types = {};
     TypeInfo result_type = {};
     FuncPointer impl = nullptr;

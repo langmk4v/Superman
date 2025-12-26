@@ -17,6 +17,17 @@ namespace fire {
   }
 
   void NameResolver::on_expr(Node* node, NdVisitorContext ctx) {
+
+    ctx.node = node;
+
+  #ifdef _FIRE_DEBUG_
+    // err::e(
+    //   node->token,
+    //   format("### on_expr node=%p (kind=%d) (ctx = {%s})",
+    //     node, static_cast<int>(node->kind), NdVisitorContext::ctx2s(ctx).c_str()),
+    //   ET_Note).print();
+  #endif
+
     switch (node->kind) {
       case NodeKind::Symbol: {
         auto sym = node->as<NdSymbol>();
@@ -76,6 +87,10 @@ namespace fire {
 
       case NodeKind::CallFunc: {
         auto call = node->as<NdCallFunc>();
+
+        if(call->is_method_call){
+          on_expr(call->inst_expr, ctx);
+        }
 
         on_expr(call->callee, ctx);
 

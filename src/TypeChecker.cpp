@@ -2,6 +2,7 @@
 #include "Error.hpp"
 #include "Node.hpp"
 #include "Sema.hpp"
+#include "BuiltinFunc.hpp"
 
 #define PRINT_LOCATION(TOK) (err::e(TOK, "node").print())
 
@@ -28,14 +29,24 @@ namespace fire {
     ctx.parent_cf_nd = cf;
 
     if(cf->is_method_call){
-      alert;
       self_ty = eval_expr_ty(cf->inst_expr, ctx);
-      todo;
-      is_method_call = true;
+      ctx.self_ty_ptr = &self_ty;
+
+      std::string const method_name { cf->callee->token.text };
+
+      if(self_ty.is(TypeKind::Class) || self_ty.is(TypeKind::Enum)){
+        todo;
+      }
+
+      for(BuiltinFunc const* method : builtin_method_table ){
+        if(method->name == method_name && method->self_type.equals(self_ty)){
+          todo;
+        }
+      }
+
       todo;
     }
 
-    ctx.self_ty_ptr = &self_ty;
 
     auto callee_ty = eval_expr_ty(cf->callee, ctx); // callee_ty = { result_type, [args...] }
 
@@ -122,12 +133,19 @@ namespace fire {
   }
 
   TypeInfo TypeChecker::eval_expr_ty(Node* node, NdVisitorContext ctx) {
-    (void)node;
-    (void)ctx;
+    ctx.node = node;
 
-    // if (node->ty_evaluated) {
-    //   return node->ty;
-    // }
+    if (node->ty_evaluated) {
+      return node->ty;
+    }
+
+  #ifdef _FIRE_DEBUG_
+    // err::e(
+    //   node->token,
+    //   format("### eval_expr_ty node=%p (kind=%d) (ctx = {%s})",
+    //       node, static_cast<int>(node->kind), NdVisitorContext::ctx2s(ctx).c_str()),
+    //   ET_Note).print();
+  #endif
 
     switch (node->kind) {
       case NodeKind::Value:

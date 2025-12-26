@@ -27,8 +27,9 @@ EXT_ASM		:=	.s
 EXT_C		:=	.c
 EXT_CXX		:=	.cpp
 
-FLAGS_OPTIMIZE	:=	-O3
-FLAGS_WARN		:=	-Wall -Wextra -Wconversion -Wno-switch
+# These flags is used for RELEASE build.
+FLAGS_OPTIMIZE	:=	-O3 -Os -Ofast
+FLAGS_WARN		:=	-Wall -Wextra -Werror=conversion -Wno-switch
 FLAGS_DEFINE	:=
 
 COMMONFLAGS		:=	\
@@ -39,7 +40,7 @@ COMMONFLAGS		:=	\
 
 FLAGS_C			:=	$(COMMONFLAGS) -std=c2x
 FLAGS_CXX		:=	$(COMMONFLAGS) -std=c++17
-FLAGS_LD		:=	-Wl,--gc-sections,-s -fuse=mold -fsanitize=leak,address,undefined
+FLAGS_LD		:=	-Wl,--gc-sections,-s -fuse=mold
 
 %.o: %$(EXT_ASM)
 	@echo "\e[1m\e[32mCOMPILE \e[37m$<\e[0m ..."
@@ -75,7 +76,7 @@ debug:
 	@mkdir -p $(BUILD_DEBUG)
 	@$(MAKE) --no-print-directory \
 		FLAGS_OPTIMIZE="-O0 -g" \
-		FLAGS_LD="" \
+		FLAGS_LD="-fuse=mold -fsanitize=leak,address,undefined" \
 		FLAGS_DEFINE="_FIRE_DEBUG_" \
 		BUILD=$(BUILD_DEBUG) \
 		BUILDMODE=$(BUILD_DEBUG) \

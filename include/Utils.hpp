@@ -3,6 +3,8 @@
 #include <string>
 #include <vector>
 
+#include "logger.h"
+
 #define _COL_RGB(r, g, b) "\e[38;2;" #r ";" #g ";" #b "m"
 
 #define COL_DEFAULT "\033[0m"
@@ -38,7 +40,7 @@
 
 #include <cstdlib>
 #include <cassert>
-#include <iosfwd>
+#include <iostream>
 
 #define debug(...) __VA_ARGS__
 
@@ -51,6 +53,7 @@
 #define printdf(fmt, ...) printf(COL_RED fmt COL_DEFAULT, __VA_ARGS__)
 
 #else
+#define assert(x) ((void)0)
 #define alert ((void)0)
 #define debug(...)
 #define printd(...)
