@@ -19,6 +19,7 @@ namespace fire {
     Tuple,
     Dict,
     Function,
+    Any,
     Class, // => クラス名、インスタンスどちらにも使用
     Enum,
   };

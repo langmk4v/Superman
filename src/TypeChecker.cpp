@@ -34,6 +34,10 @@ namespace fire {
     }
 
     for(size_t i = 0; i < defs.size(); i++){
+      if(defs[i].kind == TypeKind::Any){
+        continue;
+      }
+
       if(!defs[i].equals(actual[i])){
         result.flags |= ArgumentsCompareResult::TypeMismatch;
         result.mismatched_index = i;
@@ -75,7 +79,7 @@ namespace fire {
       }
 
       for(BuiltinFunc const* method : builtin_method_table ){
-        if(method->name == method_name && method->self_type.equals(self_ty)){
+        if(method->name == method_name && method->self_type.kind == self_ty.kind){
           auto cmp = compare_arguments(
             cf, nullptr, method, method->is_var_args, true, self_ty, method->arg_types, arg_types);
 
@@ -92,7 +96,8 @@ namespace fire {
             throw err::too_few_arguments(cf->args[cmp.mismatched_index]->token);
           }
 
-          cf->ty = method->result_type;
+          cf->ty = method->returning_self ? self_ty : method->result_type;
+
           return cf->ty;
         }
       }
@@ -193,11 +198,11 @@ namespace fire {
     }
 
   #ifdef _FIRE_DEBUG_
-    // err::e(
-    //   node->token,
-    //   format("### eval_expr_ty node=%p (kind=%d) (ctx = {%s})",
-    //       node, static_cast<int>(node->kind), NdVisitorContext::ctx2s(ctx).c_str()),
-    //   ET_Note).print();
+    err::e(
+      node->token,
+      format("### eval_expr_ty node=%p (kind=%d) (ctx = {%s})",
+          node, static_cast<int>(node->kind), NdVisitorContext::ctx2s(ctx).c_str()),
+      ET_Note).print();
   #endif
 
     switch (node->kind) {

@@ -14,6 +14,7 @@ namespace fire {
     TypeInfo self_type = { };
     std::vector<TypeInfo> arg_types = {};
     TypeInfo result_type = {};
+    bool returning_self = false;
     FuncPointer impl = nullptr;
   };
 
@@ -21,6 +22,7 @@ namespace fire {
   extern BuiltinFunc blt_println;
 
   extern BuiltinFunc bltm_string_starts;
+  extern BuiltinFunc bltm_vector_append;
 
   static constexpr BuiltinFunc const* builtin_func_table[] = {
       &blt_print,
@@ -30,5 +32,8 @@ namespace fire {
   static constexpr BuiltinFunc const* builtin_method_table[] = {
     // string::starts(self, string) -> bool
     &bltm_string_starts,
+
+    // vector::append(self, value)
+    &bltm_vector_append,
   };
 } // namespace fire

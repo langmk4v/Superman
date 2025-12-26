@@ -82,4 +82,15 @@ namespace fire {
     ObjString(ObjChar* ch) : Object(TypeKind::String), data(std::vector<char16_t>(1, ch->val)) {}
   };
 
+  struct ObjVector : Object {
+    std::vector<Object*> data;
+    Object* clone() const override { return new ObjVector(data); }
+    ObjVector(std::vector<Object*> const& v) : Object(TypeKind::Vector), data(v) {}
+    ObjVector() : Object(TypeKind::Vector) {}
+    ObjVector& append(Object* value) {
+      data.push_back(value);
+      return *this;
+    }
+  };
+
 } // namespace fire
