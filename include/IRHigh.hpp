@@ -3,12 +3,14 @@
 ## IR_High: 中間表現 (高級)
 
 ## 以下の構造を削除する
-- namespace
-- class ( --> struct + function )
+  - namespace
+  - class ( --> struct + function )
 
 ## 文を簡略化する
-- for, while, ...     --> loop
-- if, match, switch   --> if
+  - for, while, ...     --> loop
+  - if, match, switch   --> if
+
+  ** try-catch はまだ残す **
 
 */
 

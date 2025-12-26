@@ -3,14 +3,14 @@
 #include <filesystem>
 #include <cstring>
 
-#include "Utils.hpp"
 
 #include "Lexer.hpp"
 #include "Token.hpp"
 #include "Parser.hpp"
 #include "Sema.hpp"
+#include "Lower.hpp"
+
 #include "Driver.hpp"
-#include "Error.hpp"
 
 namespace fire {
 
@@ -86,6 +86,8 @@ namespace fire {
         }
 
         Sema::analyze_all(mod);
+
+        LIR* low_ir = NodeLower::lower_full(mod);
 
         // if
         // (!mod->main_fn->scope_ptr->as<FunctionScope>()->result_type.equals(TypeInfo(TypeKind::Int)))
