@@ -1,6 +1,4 @@
-/debug
-/release
-/.bak
+/build
 
 *.o
 *.d

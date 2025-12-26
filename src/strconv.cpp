@@ -1,6 +1,6 @@
-#include "strconv.h"
 #include <stdlib.h>
 #include <stdint.h>
+#include "strconv.hpp"
 
 /* replacement character */
 #define U_REPLACEMENT 0xFFFD

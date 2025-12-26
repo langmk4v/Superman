@@ -4,9 +4,7 @@
 #include <vector>
 #include <stdexcept>
 
-extern "C" {
-#include "fs_c.h"
-}
+#include "fs_impl.hpp"
 
 namespace fire {
 

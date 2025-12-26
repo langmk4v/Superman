@@ -1,6 +1,6 @@
 #include "Utils.hpp"
 #include "Object.hpp"
-#include "strconv.h"
+#include "strconv.hpp"
 
 namespace fire {
   ObjNone* Object::none = new ObjNone();

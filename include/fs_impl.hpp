@@ -1,9 +1,6 @@
 #pragma once
-#include <stddef.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include <stddef.h>
 
 typedef struct fs_file {
   char* path;
@@ -32,7 +29,3 @@ void fs_dir_find_file(fs_dir const* dir, char const* filename, int recursive, ch
 
 /* Dump */
 void fs_dir_dump(fs_dir const* dir, int indent);
-
-#ifdef __cplusplus
-}
-#endif

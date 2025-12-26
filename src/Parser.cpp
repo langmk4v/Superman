@@ -6,7 +6,7 @@
 #include "Error.hpp"
 #include "FileSystem.hpp"
 
-#include "strconv.h"
+#include "strconv.hpp"
 
 namespace fire {
 

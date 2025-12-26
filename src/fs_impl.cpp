@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "fs_c.h"
+#include "fs_impl.hpp"
 
 static int is_directory(char const* path) {
   struct stat st;
@@ -23,7 +23,7 @@ static char* dup_basename(char const* path) {
 fs_dir* fs_dir_create(char const* path) {
   if (!is_directory(path)) return NULL;
 
-  fs_dir* dir = calloc(1, sizeof(fs_dir));
+  fs_dir* dir = (fs_dir*)calloc(1, sizeof(fs_dir));
   dir->full_path = strdup(path);
   dir->name = dup_basename(path);
 
@@ -37,10 +37,10 @@ fs_dir* fs_dir_create(char const* path) {
     snprintf(full, sizeof(full), "%s/%s", path, ent->d_name);
 
     if (is_directory(full)) {
-      dir->dirs = realloc(dir->dirs, sizeof(fs_dir*) * (dir->dir_count + 1));
+      dir->dirs = (fs_dir**)realloc(dir->dirs, sizeof(fs_dir*) * (dir->dir_count + 1));
       dir->dirs[dir->dir_count++] = fs_dir_create(full);
     } else if (is_file(full)) {
-      dir->files = realloc(dir->files, sizeof(fs_file) * (dir->file_count + 1));
+      dir->files = (fs_file*)realloc(dir->files, sizeof(fs_file) * (dir->file_count + 1));
       dir->files[dir->file_count++].path = strdup(full);
     }
   }
@@ -65,7 +65,7 @@ void fs_dir_destroy(fs_dir* dir) {
 void fs_dir_find_file(fs_dir const* dir, char const* filename, int recursive, char*** results, size_t* count) {
   for (size_t i = 0; i < dir->file_count; ++i) {
     if (!strcmp(strrchr(dir->files[i].path, '/') + 1, filename)) {
-      *results = realloc(*results, sizeof(char*) * (*count + 1));
+      *results = (char**)realloc(*results, sizeof(char*) * (*count + 1));
       (*results)[(*count)++] = strdup(dir->files[i].path);
     }
   }
