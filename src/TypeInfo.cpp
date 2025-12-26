@@ -22,19 +22,20 @@ namespace fire {
 
   std::string TypeInfo::to_string() const {
     static char const* names[]{
-        "none", "int", "float", "bool", "char", "string", "vector", "tuple", "dict", "function",
+        "none", "int",   "float", "bool", "char",    "string",
+        "Vec",  "Array", "tuple", "dict", "functor",
     };
 
     std::string str;
 
     switch (kind) {
-    case TypeKind::Class:
-      str = this->class_node->name.text;
-      break;
+      case TypeKind::Class:
+        str = this->class_node->name.text;
+        break;
 
-    default:
-      str = names[static_cast<size_t>(kind)];
-      break;
+      default:
+        str = names[static_cast<size_t>(kind)];
+        break;
     }
 
     if (!parameters.empty()) {

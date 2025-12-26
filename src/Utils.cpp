@@ -106,8 +106,8 @@ namespace fire {
         return ss.str();
       }
 
-      case NodeKind::Not: {
-      }
+      case NodeKind::Not:
+        return "!" + node2s(node->as<NdNot>()->expr);
 
       case NodeKind::Ref:
         return "&" + node2s(node->as<NdRef>()->expr);
@@ -204,8 +204,31 @@ namespace fire {
         return ss.str();
       }
 
-      case NodeKind::Enum:
-        return "enum ";
+      case NodeKind::Enum: {
+        auto x = node->as<NdEnum>();
+        std::stringstream ss;
+        ss << "enum " << x->name.text << " {\n"
+           << ind << "  " << join(",\n" + ind + "  ", x->enumerators, node2s) << "\n"
+           << ind << "}";
+        return ss.str();
+      }
+
+      case NodeKind::EnumeratorDef: {
+        auto x = node->as<NdEnumeratorDef>();
+        std::stringstream ss;
+        if (x->is_no_variants) {
+          ss << x->name.text;
+        } else {
+          ss << x->name.text << "(";
+          if (x->is_struct_fields || x->is_type_names) {
+            ss << join(", ", x->multiple, node2s);
+          } else if (x->is_one_type) {
+            ss << node2s(x->variant_type);
+          }
+          ss << ")";
+        }
+        return ss.str();
+      }
 
       case NodeKind::Class: {
         auto x = node->as<NdClass>();

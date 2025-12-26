@@ -51,11 +51,11 @@ namespace fire {
           return -1;
         }
 
-        Sema::analyze_all(mod);
-
 #ifdef _FIRE_DEBUG_
-        // std::cout << node2s(mod) << std::endl;
+        std::cout << node2s(mod) << std::endl;
 #endif
+
+        Sema::analyze_all(mod);
 
         // if
         // (!mod->main_fn->scope_ptr->as<FunctionScope>()->result_type.equals(TypeInfo(TypeKind::Int)))

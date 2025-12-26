@@ -179,7 +179,9 @@ namespace fire {
 
       case NodeKind::Let: {
         auto x = node->as<NdLet>();
+
         if (x->type) on_typename(x->type, ctx);
+
         if (x->init) on_expr(x->init, ctx);
         break;
       }
@@ -324,7 +326,11 @@ namespace fire {
 
   void NameResolver::on_module(Node* node, NdVisitorContext ctx) {
     auto M = node->as<NdModule>();
-    ctx.cur_scope = M->scope_ptr->as<SCModule>();
+
+    auto modscope = M->scope_ptr->as<SCModule>();
+
+    ctx.cur_scope = modscope;
+
     for (auto& item : M->items) {
       switch (item->kind) {
         case NodeKind::Let:

@@ -70,6 +70,8 @@ namespace fire {
 
     void merge_namespaces(std::vector<Node*>& items);
 
+    void reorder_items(std::vector<Node*>& items);
+
     NdModule* parse();
 
   private:

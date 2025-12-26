@@ -11,12 +11,14 @@ namespace fire {
 
   // clang-format off
   static std::pair<std::string, TypeKind> bultin_class_names[] {
+    {"none", TypeKind::None},
     {"int", TypeKind::Int},
     {"float", TypeKind::Float},
     {"bool", TypeKind::Bool},
     {"char", TypeKind::Char},
     {"string", TypeKind::String},
     {"Vec", TypeKind::Vector},
+    {"Array", TypeKind::Array},
     {"tuple", TypeKind::Tuple},
     {"dict", TypeKind::Dict},
     {"functor", TypeKind::Function},
@@ -24,7 +26,6 @@ namespace fire {
   // clang-format on
 
   Sema::Sema() {
-    __inst = this;
   }
 
   Sema& Sema::get_instance() {
@@ -33,8 +34,7 @@ namespace fire {
   }
 
   void Sema::analyze_all(NdModule* mod) {
-    auto se = Sema();
-    se.analyze_full(mod);
+    Sema::get_instance().analyze_full(mod);
   }
 
   void Sema::analyze_full(NdModule* mod) {
@@ -106,7 +106,21 @@ namespace fire {
       if (result.hits.size() >= 1) break;
     }
 
-    if (result.hits.empty()) { return result; }
+    if (result.hits.empty()) {
+
+      for (auto& [name, kind] : bultin_class_names) {
+        if (name == node->name.text) {
+          result.hits.push_back(new Symbol{
+              .name = name,
+              .kind = SymbolKind::BuiltinType,
+              .type = TypeInfo(kind),
+          });
+          break;
+        }
+      }
+
+      return result;
+    }
 
     if (node->next) {
 

@@ -876,10 +876,42 @@ namespace fire {
     }
   }
 
+  void Parser::reorder_items(std::vector<Node*>& items) {
+    // move all enums at first
+
+    std::vector<Node*> _new;
+
+    for (auto&& x : items)
+      if (x->is(NodeKind::Let)) { _new.push_back(x); }
+
+    for (auto&& x : items)
+      if (x->is(NodeKind::Namespace)) { _new.push_back(x); }
+
+    for (auto&& x : items)
+      if (x->is(NodeKind::Enum)) { _new.push_back(x); }
+
+    for (auto&& x : items)
+      if (x->is(NodeKind::Class)) { _new.push_back(x); }
+
+    for (auto&& x : items)
+      if (x->is(NodeKind::Function)) { _new.push_back(x); }
+
+    items = std::move(_new);
+
+    for (auto&& x : items) {
+      if (x->is(NodeKind::Namespace))
+        reorder_items(x->as<NdNamespace>()->items);
+      else if (x->is(NodeKind::Module))
+        reorder_items(x->as<NdModule>()->items);
+    }
+  }
+
   NdModule* Parser::parse() {
     auto mod = ps_mod();
 
     merge_namespaces(mod->items);
+
+    reorder_items(mod->items);
 
     return mod;
   }

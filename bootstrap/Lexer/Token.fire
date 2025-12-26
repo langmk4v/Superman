@@ -3,8 +3,8 @@ import SourceFile;
 namespace firec {
     enum TokenKind {
         Emtpy,
-        Integer(i64),
-        Float(f64),
+        Integer(int),
+        Float(float),
         Char(char),
         String(string),
         Identifier,

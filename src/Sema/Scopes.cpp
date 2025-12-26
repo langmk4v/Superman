@@ -191,7 +191,6 @@ namespace fire {
       if (item->is(NodeKind::Let)) {
         auto s = variables.append(Sema::get_instance().new_variable_symbol(item->as<NdLet>()));
         symtable.append(s);
-        break;
       } else {
         auto scope = Scope::from_node(item, this);
         symtable.append(&scope->symbol);
@@ -214,7 +213,6 @@ namespace fire {
       if (item->is(NodeKind::Let)) {
         auto s = variables.append(Sema::get_instance().new_variable_symbol(item->as<NdLet>()));
         symtable.append(s);
-        break;
       } else {
         auto scope = Scope::from_node(item, this);
         symtable.append(&scope->symbol);
