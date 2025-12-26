@@ -283,19 +283,12 @@ namespace fire {
 
     ctx.cur_scope = E->scope_ptr->as<SCEnum>();
 
-    for (auto& EN : E->enumerators) {
-      if (EN->is_struct_fields) {
-        for (auto& field : EN->multiple) {
-          on_typename(field->as<NdKeyValuePair>()->value, ctx);
-        }
-      } else if (EN->is_type_names) {
-        for (auto& type : EN->multiple) {
-          on_typename(type, ctx);
-        }
-      } else if (EN->is_one_type) {
+    for (auto& EN : E->enumerators)
+      if (EN->is_struct_fields || EN->is_type_names) {
+        for (auto& item : EN->multiple)
+          on_typename(item, ctx);
+      } else if (EN->is_one_type)
         on_typename(EN->variant_type, ctx);
-      }
-    }
   }
 
   void NameResolver::on_namespace(Node* node, NdVisitorContext ctx) {
