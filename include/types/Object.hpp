@@ -64,12 +64,16 @@ namespace fire {
   };
 
   struct ObjString : Object {
-    std::u16string val;
-    ObjString& append(char16_t c);
-    ObjString& append(std::u16string const& c);
-    Object* clone() const override { return new ObjString(val); }
-    ObjString(std::u16string const& s) : Object(TypeKind::String), val(s) {}
-    ObjString(ObjChar* ch) : Object(TypeKind::String), val(std::u16string(1, ch->val)) {}
+    std::vector<char16_t> data;
+
+    ObjString& append(ObjChar*);
+    ObjString& append(ObjString*);
+    
+    Object* clone() const override { return new ObjString(data); }
+    
+    ObjString():Object(TypeKind::String){}
+    ObjString(std::vector<char16_t> const& s) : Object(TypeKind::String), data(s) {}
+    ObjString(ObjChar* ch) : Object(TypeKind::String), data(std::vector<char16_t>(1, ch->val)) {}
   };
 
 } // namespace fire
