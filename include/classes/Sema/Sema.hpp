@@ -51,6 +51,10 @@ namespace fire {
     TypeInfo* empty_array_element_type = nullptr;
     bool can_use_empty_array = false;
 
+    //
+    // slice-target-array-type
+    TypeInfo* slice_target_array_type = nullptr;
+
     int loop_depth = 0;
 
     TypeInfo* expected_type = nullptr;
@@ -61,6 +65,8 @@ namespace fire {
 
     bool as_arg_of_callfunc = false;
     NdCallFunc* parent_cf_nd = nullptr;
+
+    NdEnumeratorDef** enumerator_node_out = nullptr;
   };
 
   class Sema;
@@ -101,6 +107,8 @@ namespace fire {
     TypeInfo eval_typename_ty(NdSymbol* node, NdVisitorContext ctx);
 
     TypeInfo make_class_type(NdClass* node);
+
+    TypeInfo make_enum_type(NdEnum* node);
 
     void check_expr(Node* node, NdVisitorContext ctx);
     void check_stmt(Node* node, NdVisitorContext ctx);

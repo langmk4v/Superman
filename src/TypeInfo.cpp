@@ -33,6 +33,10 @@ namespace fire {
         str = this->class_node->name.text;
         break;
 
+      case TypeKind::Enum:
+        str = this->enum_node->name.text;
+        break;
+
       default:
         str = names[static_cast<size_t>(kind)];
         break;

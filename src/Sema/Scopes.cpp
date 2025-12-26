@@ -39,8 +39,11 @@ namespace fire {
     for (auto item : node->items) {
       switch (item->kind) {
         case NodeKind::Let: {
-          symtable.append(
+          auto varsym = symtable.append(
               variables.append(Sema::get_instance().new_variable_symbol(item->as<NdLet>())));
+
+          item->as<NdLet>()->symbol_ptr = varsym;
+
           break;
         }
 

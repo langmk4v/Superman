@@ -446,10 +446,12 @@ namespace fire {
     }
   };
 
-  struct __attribute__((packed)) NdEnumeratorDef : Node {
+  struct NdEnumeratorDef : Node {
     Token name;
     NdSymbol* variant_type = nullptr;
     std::vector<Node*> multiple;
+
+    NdEnum* parent_enum_node = nullptr;
 
     bool is_no_variants : 1 = false;   // Kind
     bool is_one_type : 1 = false;      // Kind(T)

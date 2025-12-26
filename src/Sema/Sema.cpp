@@ -19,7 +19,6 @@ namespace fire {
     {"char", TypeKind::Char},
     {"string", TypeKind::String},
     {"Vec", TypeKind::Vector},
-    {"Array", TypeKind::Array},
     {"tuple", TypeKind::Tuple},
     {"dict", TypeKind::Dict},
     {"functor", TypeKind::Function},

@@ -1,0 +1,14 @@
+
+
+enum Kind {
+    A,
+    B(int),
+    C(int, char),
+    D(a: int, b: string)
+}
+
+var k = Kind::B();
+
+fn main() -> int {
+
+}

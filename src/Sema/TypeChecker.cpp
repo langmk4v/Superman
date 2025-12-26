@@ -22,9 +22,70 @@ namespace fire {
           case SymbolKind::Var:
             if (!sym->symbol_ptr->var_info->is_type_deducted) { todo; }
             return sym->symbol_ptr->var_info->type;
+
+          case SymbolKind::Func:
+            todo;
+
+          case SymbolKind::Enum:
+            todo;
+
+          case SymbolKind::Enumerator: {
+            auto en = sym->symbol_ptr->node->as<NdEnumeratorDef>();
+
+            assert(en->kind == NodeKind::EnumeratorDef);
+
+            if (ctx.enumerator_node_out) { *ctx.enumerator_node_out = en; }
+
+            return make_enum_type(en->parent_enum_node);
+          }
+
+          case SymbolKind::Class:
+            todo;
+
+          case SymbolKind::Namespace:
+            todo;
+
+          case SymbolKind::Module:
+            todo;
+
+          case SymbolKind::TemplateParam:
+            todo;
+
+          case SymbolKind::BuiltinType: {
+            TypeInfo ty = sym->symbol_ptr->type;
+
+            for (auto p : sym->te_args) {
+              ty.parameters.push_back(eval_expr_ty(p, ctx));
+            }
+
+            switch (ty.kind) {
+              case TypeKind::Vector:
+                if (ty.parameters.size() != 1) {
+                  todo; // vector must have one parameter
+                }
+                break;
+
+              case TypeKind::Tuple:
+                if (ty.parameters.size() == 0) {
+                  todo; // tuple must have parameters
+                }
+                break;
+
+              case TypeKind::Dict:
+                if (ty.parameters.size() != 2) {
+                  todo; // dict must have two parameters
+                }
+                break;
+            }
+
+            return ty;
+          }
+
+          case SymbolKind::BuiltinFunc:
+            todo;
         }
 
-        todo;
+        todo; // ???
       }
 
       case NodeKind::KeyValuePair: {
@@ -53,34 +114,148 @@ namespace fire {
           return TypeInfo(TypeKind::Vector, {*ctx.empty_array_element_type}, false, false);
         }
 
-        auto ty = TypeInfo(TypeKind::Vector, {elems[0]}, false, false);
-
         for (size_t i = 1; i < elems.size(); i++) {
-          if (!ty.equals(elems[i])) {
+          if (!elems[i].equals(ctx.can_use_empty_array ? *ctx.empty_array_element_type
+                                                       : elems[0])) {
             todo; // type mismatch
           }
         }
 
-        return ty;
+        return TypeInfo(TypeKind::Vector, std::move(elems), false, false);
       }
 
       case NodeKind::Tuple: {
-        todo;
-      }
+        auto tuple = node->as<NdTuple>();
 
-      case NodeKind::Slice: {
-        todo;
-      }
+        std::vector<TypeInfo> elems;
 
-      case NodeKind::Subscript: {
-        todo;
-      }
+        for (auto& elem : tuple->elems) {
+          elems.push_back(eval_expr_ty(elem, ctx));
+        }
 
-      case NodeKind::MemberAccess: {
-        todo;
+        return TypeInfo(TypeKind::Tuple, std::move(elems), false, false);
       }
 
       case NodeKind::CallFunc: {
+        auto cf = node->as<NdCallFunc>();
+
+        // get argument types
+        std::vector<TypeInfo> arg_types;
+        for (auto& arg : cf->args) {
+          arg_types.push_back(eval_expr_ty(arg, ctx));
+        }
+
+        // check argument matchings
+
+        size_t argc_give = arg_types.size();
+
+        NdEnumeratorDef* nd_en_def = nullptr;
+
+        ctx.enumerator_node_out = &nd_en_def;
+
+        auto callee_ty = eval_expr_ty(cf->callee, ctx); // callee_ty = { result_type, [args...] }
+
+        if (callee_ty.is(TypeKind::Class)) { todo; }
+
+        if (callee_ty.is(TypeKind::Enum)) {
+          assert(nd_en_def);
+
+          // no-variants
+          if (nd_en_def->is_no_variants) {
+            todo; // enumerator no have variants
+          }
+
+          // one variant
+          else if (nd_en_def->is_one_type) {
+            if (argc_give == 0) {
+              todo; // no argument
+            } else if (argc_give >= 2) {
+              todo; // too many arguments
+            } else if (argc_give == 1) {
+              ctx = {};
+              if (!arg_types[0].equals(eval_expr_ty(nd_en_def->variant_type, ctx))) {
+                todo; // argument type mismatch
+              }
+            }
+          }
+
+          // multiple variants
+          else if (nd_en_def->is_type_names) {
+            todo; // type names
+          }
+
+          // struct fields
+          else if (nd_en_def->is_struct_fields) {
+            todo; // struct fields
+          }
+
+          return callee_ty;
+        }
+
+        if (callee_ty.kind != TypeKind::Function) {
+          todo; // callee must be function
+        }
+
+        size_t argc_take = callee_ty.parameters.size() - 1;
+
+        if (argc_take != argc_give) {
+          todo; // argument count mismatch
+        }
+
+        for (size_t i = 0; i < argc_take; i++) {
+          if (!arg_types[i].equals(callee_ty.parameters[i + 1])) {
+            todo; // argument type mismatch
+          }
+        }
+
+        return callee_ty.parameters[0];
+      }
+
+      //
+      // Subscript:
+      case NodeKind::Subscript: {
+        auto subs = node->as<NdExpr>();
+
+        bool is_slice = subs->rhs->is(NodeKind::Slice);
+
+        auto array_ty = eval_expr_ty(subs->lhs, ctx);
+
+        if (is_slice) {
+          auto slice = subs->rhs->as<NdExpr>();
+
+          if (slice->lhs && !eval_expr_ty(slice->lhs, ctx).is(TypeKind::Int)) {
+            todo; // index must be int
+          }
+
+          if (slice->rhs && !eval_expr_ty(slice->rhs, ctx).is(TypeKind::Int)) {
+            todo; // end must be int
+          }
+
+          return array_ty;
+        }
+
+        auto index_ty = eval_expr_ty(subs->rhs, ctx);
+
+        if (!index_ty.is(TypeKind::Int)) {
+          todo; // index must be int
+        }
+
+        if (!array_ty.is(TypeKind::Vector)) {
+          todo; // array must be vector
+        }
+
+        return array_ty.parameters[0];
+      }
+
+      case NodeKind::MemberAccess: {
+        auto mm = node->as<NdExpr>();
+
+        auto obj_ty = eval_expr_ty(mm->lhs, ctx);
+
+        if (obj_ty.class_node == nullptr) {
+          todo; // not instance.
+        }
+
         todo;
       }
 
@@ -136,6 +311,7 @@ namespace fire {
   TypeInfo TypeChecker::eval_typename_ty(NdSymbol* node, NdVisitorContext ctx) {
     (void)node;
     (void)ctx;
+
     todo;
   }
 
@@ -147,10 +323,37 @@ namespace fire {
     return type;
   }
 
+  TypeInfo TypeChecker::make_enum_type(NdEnum* node) {
+    auto type = TypeInfo(TypeKind::Enum);
+
+    type.enum_node = node;
+
+    debug(assert(node));
+
+    return type;
+  }
+
   void TypeChecker::check_expr(Node* node, NdVisitorContext ctx) {
   }
 
   void TypeChecker::check_stmt(Node* node, NdVisitorContext ctx) {
+    switch (node->kind) {
+      case NodeKind::Let: {
+        auto let = node->as<NdLet>();
+
+        if (let->type) {
+          // auto type_ty = eval_typename_ty(let->type, ctx);
+          // todo;
+        }
+
+        if (let->init) {
+          auto init_ty = eval_expr_ty(let->init, ctx);
+          (void)init_ty;
+        }
+
+        break;
+      }
+    }
   }
 
   void TypeChecker::check_scope(NdScope* node, NdVisitorContext ctx) {
@@ -166,9 +369,33 @@ namespace fire {
   }
 
   void TypeChecker::check_namespace(NdNamespace* node, NdVisitorContext ctx) {
+    ctx.cur_scope = node->scope_ptr->as<SCNamespace>();
+
+    for (auto& item : node->items) {
+      switch (item->kind) {
+        case NodeKind::Let:
+          check_stmt(item, ctx);
+          break;
+      }
+    }
   }
 
   void TypeChecker::check_module(NdModule* node, NdVisitorContext ctx) {
+    ctx.cur_scope = node->scope_ptr->as<SCModule>();
+
+    for (auto& item : node->items) {
+      switch (item->kind) {
+
+        case NodeKind::Namespace: {
+          check_namespace(item->as<NdNamespace>(), ctx);
+          break;
+        }
+
+        case NodeKind::Let:
+          check_stmt(item, ctx);
+          break;
+      }
+    }
   }
 
 } // namespace fire

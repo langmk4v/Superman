@@ -5,9 +5,8 @@
 
 namespace fire {
   struct NdClass;
-}
+  struct NdEnum;
 
-namespace fire {
   enum class TypeKind {
     None,
     Int,
@@ -22,7 +21,6 @@ namespace fire {
     Function,
     Class, // => クラス名、インスタンスどちらにも使用
     Enum,
-    Enumerator,
   };
 
   struct TypeInfo {
@@ -32,9 +30,8 @@ namespace fire {
     bool is_ref = false;
     bool is_const = false;
 
-    union {
-      NdClass* class_node = nullptr;
-    };
+    NdClass* class_node = nullptr;
+    NdEnum* enum_node = nullptr;
 
     TypeInfo(TypeKind k = TypeKind::None) : kind(k) {
     }

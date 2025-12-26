@@ -707,7 +707,9 @@ namespace fire {
     if (eat("}")) { throw err::empty_class_or_enum_is_not_valid(*tok); }
 
     do {
-      nd->enumerators.emplace_back(ps_enumerator_def());
+      auto E = nd->enumerators.emplace_back(ps_enumerator_def());
+
+      E->parent_enum_node = nd;
     } while (!is_end() && eat(","));
 
     expect("}");
