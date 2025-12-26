@@ -7,7 +7,7 @@ enum Kind {
     D(a: int, b: string)
 }
 
-var k = Kind::B();
+var k = Kind::D(1, "aiueo");
 
 fn main() -> int {
 

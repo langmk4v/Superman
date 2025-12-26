@@ -3,8 +3,8 @@
 #include "Utils.hpp"
 
 #include "Lexer.hpp"
-#include "Token.hpp"
 #include "SourceFile.hpp"
+#include "Node.hpp"
 
 namespace fire {
   enum errTypes {
@@ -27,7 +27,6 @@ namespace fire {
 
       virtual e* print();
 
-    protected:
       e(Token const& tok, std::string msg, errTypes et = ET_Error);
     };
 
@@ -245,6 +244,35 @@ namespace fire {
         }
       };
     } // namespace semantics
+
+    namespace emitters {
+      static inline void expected_one_variant_for_enumerator(Token& tok, NdEnumeratorDef* def) {
+        err::e(tok, "expected one variant for enumerator '" + def->get_full_name() + "'", ET_Error)
+            .print();
+        err::e(def->variant_type->token, "defined here", ET_Note).print();
+      }
+
+      static inline void too_few_variants_for_enumerator(Token& tok, NdEnumeratorDef* def) {
+        err::e(tok, "too few variants for enumerator '" + def->get_full_name() + "'", ET_Error)
+            .print();
+        err::e(def->token, "defined here", ET_Note).print();
+      }
+
+      static inline void too_many_variants_for_enumerator(Token& tok, NdEnumeratorDef* def) {
+        err::e(tok, "too many variants for enumerator '" + def->get_full_name() + "'", ET_Error)
+            .print();
+        err::e(def->token, "defined here", ET_Note).print();
+      }
+
+      static inline void enumerator_no_have_variants(Token& tok, NdEnumeratorDef* def) {
+        err::e(tok, "enumerator '" + def->get_full_name() + "' has no variants", ET_Error).print();
+        err::e(def->token, "defined here", ET_Note).print();
+      }
+
+      static inline void expected_type_name_here(Token& tok) {
+        err::e(tok, "expected type name here", ET_Error).print();
+      }
+    } // namespace emitters
 
   } // namespace err
 

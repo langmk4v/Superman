@@ -446,6 +446,14 @@ namespace fire {
     }
   };
 
+  struct NdEnumeratorDef;
+  struct NdEnum : Node {
+    Token name;
+    std::vector<NdEnumeratorDef*> enumerators;
+    NdEnum(Token& t) : Node(NodeKind::Enum, t) {
+    }
+  };
+
   struct NdEnumeratorDef : Node {
     Token name;
     NdSymbol* variant_type = nullptr;
@@ -453,19 +461,16 @@ namespace fire {
 
     NdEnum* parent_enum_node = nullptr;
 
+    std::string get_full_name() const {
+      return parent_enum_node->name.text + "::" + name.text;
+    }
+
     bool is_no_variants : 1 = false;   // Kind
     bool is_one_type : 1 = false;      // Kind(T)
     bool is_type_names : 1 = false;    // Kind(T, U, ...)  -->  multiple< NdSymbol >
     bool is_struct_fields : 1 = false; // Kind(a: T, ...)  -->  multiple< NdKeyValuePair >
 
     NdEnumeratorDef(Token& t) : Node(NodeKind::EnumeratorDef, t) {
-    }
-  };
-
-  struct NdEnum : Node {
-    Token name;
-    std::vector<NdEnumeratorDef*> enumerators;
-    NdEnum(Token& t) : Node(NodeKind::Enum, t) {
     }
   };
 

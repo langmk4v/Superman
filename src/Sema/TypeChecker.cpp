@@ -19,14 +19,17 @@ namespace fire {
         if (!sym->symbol_ptr) { todo; }
 
         switch (sym->symbol_ptr->kind) {
+          case SymbolKind::Enum:
+          case SymbolKind::Class:
+          case SymbolKind::BuiltinType:
+          case SymbolKind::TemplateParam:
+            return eval_typename_ty(sym, ctx);
+
           case SymbolKind::Var:
             if (!sym->symbol_ptr->var_info->is_type_deducted) { todo; }
             return sym->symbol_ptr->var_info->type;
 
           case SymbolKind::Func:
-            todo;
-
-          case SymbolKind::Enum:
             todo;
 
           case SymbolKind::Enumerator: {
@@ -39,47 +42,11 @@ namespace fire {
             return make_enum_type(en->parent_enum_node);
           }
 
-          case SymbolKind::Class:
-            todo;
-
           case SymbolKind::Namespace:
             todo;
 
           case SymbolKind::Module:
             todo;
-
-          case SymbolKind::TemplateParam:
-            todo;
-
-          case SymbolKind::BuiltinType: {
-            TypeInfo ty = sym->symbol_ptr->type;
-
-            for (auto p : sym->te_args) {
-              ty.parameters.push_back(eval_expr_ty(p, ctx));
-            }
-
-            switch (ty.kind) {
-              case TypeKind::Vector:
-                if (ty.parameters.size() != 1) {
-                  todo; // vector must have one parameter
-                }
-                break;
-
-              case TypeKind::Tuple:
-                if (ty.parameters.size() == 0) {
-                  todo; // tuple must have parameters
-                }
-                break;
-
-              case TypeKind::Dict:
-                if (ty.parameters.size() != 2) {
-                  todo; // dict must have two parameters
-                }
-                break;
-            }
-
-            return ty;
-          }
 
           case SymbolKind::BuiltinFunc:
             todo;
@@ -162,31 +129,46 @@ namespace fire {
 
           // no-variants
           if (nd_en_def->is_no_variants) {
-            todo; // enumerator no have variants
+            err::emitters::enumerator_no_have_variants(cf->args[0]->token, nd_en_def);
           }
 
           // one variant
           else if (nd_en_def->is_one_type) {
             if (argc_give == 0) {
-              todo; // no argument
+              err::emitters::expected_one_variant_for_enumerator(cf->args[0]->token, nd_en_def);
             } else if (argc_give >= 2) {
-              todo; // too many arguments
+              err::emitters::too_many_variants_for_enumerator(cf->args[0]->token, nd_en_def);
             } else if (argc_give == 1) {
               ctx = {};
               if (!arg_types[0].equals(eval_expr_ty(nd_en_def->variant_type, ctx))) {
-                todo; // argument type mismatch
+                throw err::mismatched_types(
+                    cf->args[0]->token, eval_typename_ty(nd_en_def->variant_type, ctx).to_string(),
+                    arg_types[0].to_string());
               }
             }
           }
 
-          // multiple variants
-          else if (nd_en_def->is_type_names) {
-            todo; // type names
-          }
+          // multiple variants or struct fields
+          else if (nd_en_def->is_type_names || nd_en_def->is_struct_fields) {
+            if (size_t count = nd_en_def->multiple.size(); count > argc_give) {
+              err::emitters::too_few_variants_for_enumerator(cf->args[0]->token, nd_en_def);
+            } else if (count < argc_give) {
+              err::emitters::too_many_variants_for_enumerator(cf->args[0]->token, nd_en_def);
+            } else {
+              for (size_t i = 0; i < count; i++) {
+                auto expected_ty =
+                    nd_en_def->multiple[i]->is(NodeKind::Symbol)
+                        ? eval_typename_ty(nd_en_def->multiple[i]->as<NdSymbol>(), ctx)
+                        : eval_typename_ty(
+                              nd_en_def->multiple[i]->as<NdKeyValuePair>()->value->as<NdSymbol>(),
+                              ctx);
 
-          // struct fields
-          else if (nd_en_def->is_struct_fields) {
-            todo; // struct fields
+                if (!arg_types[i].equals(expected_ty)) {
+                  throw err::mismatched_types(cf->args[i]->token, expected_ty.to_string(),
+                                              arg_types[i].to_string());
+                }
+              }
+            }
           }
 
           return callee_ty;
@@ -311,6 +293,59 @@ namespace fire {
   TypeInfo TypeChecker::eval_typename_ty(NdSymbol* node, NdVisitorContext ctx) {
     (void)node;
     (void)ctx;
+
+    switch (node->kind) {
+      case NodeKind::Symbol: {
+        auto sym = node->as<NdSymbol>();
+
+        if (sym->symbol_ptr) {
+          switch (sym->symbol_ptr->kind) {
+            case SymbolKind::Enum:
+              todo;
+
+            case SymbolKind::Class:
+              todo;
+
+            case SymbolKind::BuiltinType: {
+              TypeInfo ty = sym->symbol_ptr->type;
+
+              for (auto p : sym->te_args) {
+                ty.parameters.push_back(eval_expr_ty(p, ctx));
+              }
+
+              switch (ty.kind) {
+                case TypeKind::Vector:
+                  if (ty.parameters.size() != 1) {
+                    todo; // vector must have one parameter
+                  }
+                  break;
+
+                case TypeKind::Tuple:
+                  if (ty.parameters.size() == 0) {
+                    todo; // tuple must have parameters
+                  }
+                  break;
+
+                case TypeKind::Dict:
+                  if (ty.parameters.size() != 2) {
+                    todo; // dict must have two parameters
+                  }
+                  break;
+              }
+
+              return ty;
+            }
+
+            case SymbolKind::TemplateParam:
+              todo;
+          }
+
+          err::emitters::expected_type_name_here(node->token);
+        }
+
+        todo;
+      }
+    }
 
     todo;
   }

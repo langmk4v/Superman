@@ -8,13 +8,8 @@ namespace fire {
     switch (node->kind) {
       case NodeKind::Symbol: {
         auto sym = node->as<NdSymbol>();
+        if (sym->dec) on_expr(sym->dec->expr, ctx);
         on_expr(sym, ctx);
-        break;
-      }
-
-      case NodeKind::DeclType: {
-        auto decl = node->as<NdDeclType>();
-        on_expr(decl->expr, ctx);
         break;
       }
     }
@@ -281,9 +276,12 @@ namespace fire {
     ctx.cur_scope = E->scope_ptr->as<SCEnum>();
 
     for (auto& EN : E->enumerators)
-      if (EN->is_struct_fields || EN->is_type_names) {
+      if (EN->is_type_names) {
         for (auto& item : EN->multiple)
           on_typename(item, ctx);
+      } else if (EN->is_struct_fields) {
+        for (auto& item : EN->multiple)
+          on_typename(item->as<NdKeyValuePair>()->value->as<NdSymbol>(), ctx);
       } else if (EN->is_one_type)
         on_typename(EN->variant_type, ctx);
   }
