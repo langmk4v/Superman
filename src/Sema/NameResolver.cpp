@@ -8,7 +8,8 @@ namespace fire {
     switch (node->kind) {
       case NodeKind::Symbol: {
         auto sym = node->as<NdSymbol>();
-        if (sym->dec) on_expr(sym->dec->expr, ctx);
+        if (sym->dec)
+          on_expr(sym->dec->expr, ctx);
         on_expr(sym, ctx);
         break;
       }
@@ -21,7 +22,9 @@ namespace fire {
         auto sym = node->as<NdSymbol>();
         auto result = S.find_symbol(sym, ctx);
 
-        if (result.hits.size() == 1) { sym->symbol_ptr = result.hits[0]; }
+        if (result.hits.size() == 1) {
+          sym->symbol_ptr = result.hits[0];
+        }
 
         break;
       }
@@ -170,18 +173,23 @@ namespace fire {
       case NodeKind::Let: {
         auto x = node->as<NdLet>();
 
-        if (x->type) on_typename(x->type, ctx);
+        if (x->type)
+          on_typename(x->type, ctx);
 
-        if (x->init) on_expr(x->init, ctx);
+        if (x->init)
+          on_expr(x->init, ctx);
         break;
       }
 
       case NodeKind::If: {
         auto x = node->as<NdIf>();
-        if (x->vardef) on_stmt(x->vardef, ctx);
-        if (x->cond) on_expr(x->cond, ctx);
+        if (x->vardef)
+          on_stmt(x->vardef, ctx);
+        if (x->cond)
+          on_expr(x->cond, ctx);
         on_stmt(x->thencode, ctx);
-        if (x->elsecode) on_stmt(x->elsecode, ctx);
+        if (x->elsecode)
+          on_stmt(x->elsecode, ctx);
         break;
       }
 
@@ -196,25 +204,30 @@ namespace fire {
       case NodeKind::While: {
         auto x = node->as<NdWhile>();
         ctx.loop_depth++;
-        if (x->vardef) on_stmt(x->vardef, ctx);
-        if (x->cond) on_expr(x->cond, ctx);
+        if (x->vardef)
+          on_stmt(x->vardef, ctx);
+        if (x->cond)
+          on_expr(x->cond, ctx);
         on_stmt(x->body, ctx);
         break;
       }
 
       case NodeKind::Break: {
-        if (ctx.loop_depth == 0) throw err::semantics::cannot_use_break_here(node->token);
+        if (ctx.loop_depth == 0)
+          throw err::semantics::cannot_use_break_here(node->token);
         break;
       }
 
       case NodeKind::Continue: {
-        if (ctx.loop_depth == 0) throw err::semantics::cannot_use_continue_here(node->token);
+        if (ctx.loop_depth == 0)
+          throw err::semantics::cannot_use_continue_here(node->token);
         break;
       }
 
       case NodeKind::Return: {
         auto x = node->as<NdReturn>();
-        if (x->expr) on_expr(x->expr, ctx);
+        if (x->expr)
+          on_expr(x->expr, ctx);
         break;
       }
 
@@ -225,9 +238,15 @@ namespace fire {
           on_typename(catch_->error_type, ctx);
           on_scope(catch_->body, ctx);
         }
-        if (x->finally_block) on_scope(x->finally_block, ctx);
+        if (x->finally_block)
+          on_scope(x->finally_block, ctx);
         break;
       }
+
+      default:
+        assert(node->is_expr_full());
+        on_expr(node, ctx);
+        break;
     }
   }
 
@@ -251,7 +270,8 @@ namespace fire {
       on_typename(arg.type, ctx);
     }
 
-    if (func->result_type) on_typename(func->result_type, ctx);
+    if (func->result_type)
+      on_typename(func->result_type, ctx);
 
     on_scope(func->body, ctx);
   }

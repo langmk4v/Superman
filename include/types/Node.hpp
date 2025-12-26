@@ -124,6 +124,7 @@ namespace fire {
     Scope* scope_ptr = nullptr;
 
     TypeInfo ty = {};
+    bool ty_evaluated = false;
 
     template <typename T>
     T* as() {
@@ -259,6 +260,7 @@ namespace fire {
   struct NdGetTupleElement : Node {
     Node* expr;
     int index;
+    Token* index_tok = nullptr;
     NdGetTupleElement(Token& tok, Node* expr, int index)
         : Node(NodeKind::GetTupleElement, tok), expr(expr), index(index) {
     }

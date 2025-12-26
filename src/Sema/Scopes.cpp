@@ -39,11 +39,24 @@ namespace fire {
     for (auto item : node->items) {
       switch (item->kind) {
         case NodeKind::Let: {
-          auto varsym = symtable.append(
-              variables.append(Sema::get_instance().new_variable_symbol(item->as<NdLet>())));
 
-          item->as<NdLet>()->symbol_ptr = varsym;
+          auto let = item->as<NdLet>();
 
+          for (auto s : symtable.symbols) {
+            if (s->kind == SymbolKind::Var && s->name == let->name.text) {
+              let->symbol_ptr = s;
+              alert;
+              goto __pass_create_letsym;
+            }
+          }
+
+          alert;
+          let->symbol_ptr =
+              symtable.append(variables.append(Sema::get_instance().new_variable_symbol(let)));
+
+          assert(let->symbol_ptr);
+
+        __pass_create_letsym:;
           break;
         }
 
@@ -110,7 +123,9 @@ namespace fire {
       catches.push_back(cc);
     }
 
-    if (node->finally_block) { finally_scope = new SCScope(node->finally_block, this); }
+    if (node->finally_block) {
+      finally_scope = new SCScope(node->finally_block, this);
+    }
 
     node->scope_ptr = this;
   }
@@ -215,8 +230,11 @@ namespace fire {
 
     for (auto& item : node->items) {
       if (item->is(NodeKind::Let)) {
-        auto s = variables.append(Sema::get_instance().new_variable_symbol(item->as<NdLet>()));
+        auto let = item->as<NdLet>();
+        auto s = variables.append(Sema::get_instance().new_variable_symbol(let));
         symtable.append(s);
+        let->symbol_ptr = s;
+        assert(let->symbol_ptr);
       } else {
         auto scope = Scope::from_node(item, this);
         symtable.append(&scope->symbol);

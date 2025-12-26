@@ -9,25 +9,37 @@ namespace fire {
     (void)node;
     (void)ctx;
 
+    // if (node->ty_evaluated) {
+    //   return node->ty;
+    // }
+
     switch (node->kind) {
       case NodeKind::Value:
-        return node->as<NdValue>()->obj->type;
+        node->ty = node->as<NdValue>()->obj->type;
+        break;
 
       case NodeKind::Symbol: {
         auto sym = node->as<NdSymbol>();
 
-        if (!sym->symbol_ptr) { todo; }
+        if (!sym->symbol_ptr) {
+          throw err::use_of_undefined_symbol(sym->token);
+          todo;
+        }
 
         switch (sym->symbol_ptr->kind) {
           case SymbolKind::Enum:
           case SymbolKind::Class:
           case SymbolKind::BuiltinType:
           case SymbolKind::TemplateParam:
-            return eval_typename_ty(sym, ctx);
+            sym->ty = eval_typename_ty(sym, ctx);
+            break;
 
           case SymbolKind::Var:
-            if (!sym->symbol_ptr->var_info->is_type_deducted) { todo; }
-            return sym->symbol_ptr->var_info->type;
+            if (!sym->symbol_ptr->var_info->is_type_deducted) {
+              todo;
+            }
+            node->ty = sym->symbol_ptr->var_info->type;
+            break;
 
           case SymbolKind::Func:
             todo;
@@ -37,9 +49,12 @@ namespace fire {
 
             assert(en->kind == NodeKind::EnumeratorDef);
 
-            if (ctx.enumerator_node_out) { *ctx.enumerator_node_out = en; }
+            if (ctx.enumerator_node_out) {
+              *ctx.enumerator_node_out = en;
+            }
 
-            return make_enum_type(en->parent_enum_node);
+            node->ty = make_enum_type(en->parent_enum_node);
+            break;
           }
 
           case SymbolKind::Namespace:
@@ -50,9 +65,12 @@ namespace fire {
 
           case SymbolKind::BuiltinFunc:
             todo;
+
+          default:
+            todo;
         }
 
-        todo; // ???
+        break;
       }
 
       case NodeKind::KeyValuePair: {
@@ -60,8 +78,11 @@ namespace fire {
       }
 
       case NodeKind::Self: {
-        if (!ctx.in_method) { throw err::semantics::cannot_use_self_here(node->token); }
-        return make_class_type(ctx.cur_class->get_node());
+        if (!ctx.in_method) {
+          throw err::semantics::cannot_use_self_here(node->token);
+        }
+        node->ty = make_class_type(ctx.cur_class->get_node());
+        break;
       }
 
       case NodeKind::Array: {
@@ -78,7 +99,8 @@ namespace fire {
             todo; // cannot deduce element type of empty array
           }
 
-          return TypeInfo(TypeKind::Vector, {*ctx.empty_array_element_type}, false, false);
+          node->ty = TypeInfo(TypeKind::Vector, {*ctx.empty_array_element_type}, false, false);
+          break;
         }
 
         for (size_t i = 1; i < elems.size(); i++) {
@@ -88,7 +110,8 @@ namespace fire {
           }
         }
 
-        return TypeInfo(TypeKind::Vector, std::move(elems), false, false);
+        node->ty = TypeInfo(TypeKind::Vector, std::move(elems), false, false);
+        break;
       }
 
       case NodeKind::Tuple: {
@@ -100,7 +123,8 @@ namespace fire {
           elems.push_back(eval_expr_ty(elem, ctx));
         }
 
-        return TypeInfo(TypeKind::Tuple, std::move(elems), false, false);
+        node->ty = TypeInfo(TypeKind::Tuple, std::move(elems), false, false);
+        break;
       }
 
       case NodeKind::CallFunc: {
@@ -122,7 +146,9 @@ namespace fire {
 
         auto callee_ty = eval_expr_ty(cf->callee, ctx); // callee_ty = { result_type, [args...] }
 
-        if (callee_ty.is(TypeKind::Class)) { todo; }
+        if (callee_ty.is(TypeKind::Class)) {
+          todo;
+        }
 
         if (callee_ty.is(TypeKind::Enum)) {
           assert(nd_en_def);
@@ -171,7 +197,8 @@ namespace fire {
             }
           }
 
-          return callee_ty;
+          node->ty = callee_ty;
+          break;
         }
 
         if (callee_ty.kind != TypeKind::Function) {
@@ -190,7 +217,8 @@ namespace fire {
           }
         }
 
-        return callee_ty.parameters[0];
+        node->ty = callee_ty.parameters[0];
+        break;
       }
 
       //
@@ -213,7 +241,8 @@ namespace fire {
             todo; // end must be int
           }
 
-          return array_ty;
+          node->ty = array_ty;
+          break;
         }
 
         auto index_ty = eval_expr_ty(subs->rhs, ctx);
@@ -226,7 +255,8 @@ namespace fire {
           todo; // array must be vector
         }
 
-        return array_ty.parameters[0];
+        node->ty = array_ty.parameters[0];
+        break;
       }
 
       case NodeKind::MemberAccess: {
@@ -242,7 +272,17 @@ namespace fire {
       }
 
       case NodeKind::GetTupleElement: {
-        todo;
+        auto ge = node->as<NdGetTupleElement>();
+        auto obj_ty = eval_expr_ty(ge->expr, ctx);
+        alert;
+        if (!obj_ty.is(TypeKind::Tuple)) {
+          throw err::mismatched_types(ge->token, "tuple", obj_ty.to_string());
+        }
+        if (ge->index < 0 || ge->index >= obj_ty.parameters.size()) {
+          throw err::index_out_of_range(*ge->index_tok, ge->index, obj_ty.parameters.size());
+        }
+        node->ty = obj_ty.parameters[ge->index];
+        break;
       }
 
       case NodeKind::Inclement: {
@@ -276,18 +316,24 @@ namespace fire {
       case NodeKind::AssignWithOp: {
         todo;
       }
+
+      default: {
+        assert(node->is_expr());
+
+        auto ex = node->as<NdExpr>();
+
+        auto lhs_ty = eval_expr_ty(ex->lhs, ctx);
+        auto rhs_ty = eval_expr_ty(ex->rhs, ctx);
+
+        // todo: check operators ...
+
+        node->ty = lhs_ty;
+        break;
+      }
     }
 
-    assert(node->is_expr());
-
-    auto ex = node->as<NdExpr>();
-
-    auto lhs_ty = eval_expr_ty(ex->lhs, ctx);
-    auto rhs_ty = eval_expr_ty(ex->rhs, ctx);
-
-    // todo: check operators ...
-
-    return lhs_ty;
+    node->ty_evaluated = true;
+    return node->ty;
   }
 
   TypeInfo TypeChecker::eval_typename_ty(NdSymbol* node, NdVisitorContext ctx) {
@@ -298,56 +344,64 @@ namespace fire {
       case NodeKind::Symbol: {
         auto sym = node->as<NdSymbol>();
 
-        if (sym->symbol_ptr) {
-          switch (sym->symbol_ptr->kind) {
-            case SymbolKind::Enum:
-              todo;
-
-            case SymbolKind::Class:
-              todo;
-
-            case SymbolKind::BuiltinType: {
-              TypeInfo ty = sym->symbol_ptr->type;
-
-              for (auto p : sym->te_args) {
-                ty.parameters.push_back(eval_expr_ty(p, ctx));
-              }
-
-              switch (ty.kind) {
-                case TypeKind::Vector:
-                  if (ty.parameters.size() != 1) {
-                    todo; // vector must have one parameter
-                  }
-                  break;
-
-                case TypeKind::Tuple:
-                  if (ty.parameters.size() == 0) {
-                    todo; // tuple must have parameters
-                  }
-                  break;
-
-                case TypeKind::Dict:
-                  if (ty.parameters.size() != 2) {
-                    todo; // dict must have two parameters
-                  }
-                  break;
-              }
-
-              return ty;
-            }
-
-            case SymbolKind::TemplateParam:
-              todo;
-          }
-
-          err::emitters::expected_type_name_here(node->token);
+        if (!sym->symbol_ptr) {
+          todo;
         }
 
-        todo;
+        switch (sym->symbol_ptr->kind) {
+          case SymbolKind::Enum:
+            todo;
+
+          case SymbolKind::Class:
+            todo;
+
+          case SymbolKind::BuiltinType: {
+            TypeInfo ty = sym->symbol_ptr->type;
+
+            for (auto p : sym->te_args) {
+              ty.parameters.push_back(eval_expr_ty(p, ctx));
+            }
+
+            switch (ty.kind) {
+              case TypeKind::Vector:
+                if (ty.parameters.size() != 1) {
+                  todo; // vector must have one parameter
+                }
+                break;
+
+              case TypeKind::Tuple:
+                if (ty.parameters.size() == 0) {
+                  todo; // tuple must have parameters
+                }
+                break;
+
+              case TypeKind::Dict:
+                if (ty.parameters.size() != 2) {
+                  todo; // dict must have two parameters
+                }
+                break;
+            }
+
+            node->ty = ty;
+            break;
+          }
+
+          case SymbolKind::TemplateParam:
+            todo;
+
+          default:
+            err::emitters::expected_type_name_here(node->token);
+        }
+
+        break;
       }
+
+      default:
+        todo;
     }
 
-    todo;
+    node->ty_evaluated = true;
+    return node->ty;
   }
 
   TypeInfo TypeChecker::make_class_type(NdClass* node) {
@@ -369,6 +423,9 @@ namespace fire {
   }
 
   void TypeChecker::check_expr(Node* node, NdVisitorContext ctx) {
+    assert(node->is_expr_full());
+
+    eval_expr_ty(node, ctx);
   }
 
   void TypeChecker::check_stmt(Node* node, NdVisitorContext ctx) {
@@ -376,14 +433,25 @@ namespace fire {
       case NodeKind::Let: {
         auto let = node->as<NdLet>();
 
+        assert(let->symbol_ptr);
+
         if (let->type) {
-          // auto type_ty = eval_typename_ty(let->type, ctx);
-          // todo;
+          let->symbol_ptr->var_info->type = eval_typename_ty(let->type, ctx);
+          let->symbol_ptr->var_info->is_type_deducted = true;
         }
 
         if (let->init) {
           auto init_ty = eval_expr_ty(let->init, ctx);
-          (void)init_ty;
+
+          if (let->type) {
+            if (!let->type->ty.equals(init_ty)) {
+              throw err::mismatched_types(let->init->token, let->type->ty.to_string(),
+                                          init_ty.to_string());
+            }
+          } else {
+            let->symbol_ptr->var_info->type = init_ty;
+            let->symbol_ptr->var_info->is_type_deducted = true;
+          }
         }
 
         break;
@@ -392,9 +460,43 @@ namespace fire {
   }
 
   void TypeChecker::check_scope(NdScope* node, NdVisitorContext ctx) {
+    ctx.cur_scope = node->scope_ptr;
+
+    for (auto& item : node->items) {
+      switch (item->kind) {
+        case NodeKind::Let:
+        case NodeKind::If:
+        case NodeKind::Match:
+        case NodeKind::For:
+        case NodeKind::While:
+        case NodeKind::Loop:
+          check_stmt(item, ctx);
+          break;
+        case NodeKind::Scope:
+          check_scope(item->as<NdScope>(), ctx);
+          break;
+        default:
+          check_expr(item, ctx);
+          break;
+      }
+    }
   }
 
   void TypeChecker::check_function(NdFunction* node, NdVisitorContext ctx) {
+
+    auto fn_scope = node->scope_ptr->as<SCFunction>();
+
+    for (auto& arg : node->args) {
+      arg.type->ty = eval_typename_ty(arg.type, ctx);
+      arg.type->ty_evaluated = true;
+    }
+
+    if (node->result_type) {
+      node->result_type->ty = eval_typename_ty(node->result_type, ctx);
+      node->result_type->ty_evaluated = true;
+    }
+
+    check_scope(node->body, ctx);
   }
 
   void TypeChecker::check_class(NdClass* node, NdVisitorContext ctx) {
@@ -420,14 +522,24 @@ namespace fire {
 
     for (auto& item : node->items) {
       switch (item->kind) {
-
-        case NodeKind::Namespace: {
-          check_namespace(item->as<NdNamespace>(), ctx);
-          break;
-        }
-
         case NodeKind::Let:
           check_stmt(item, ctx);
+          break;
+
+        case NodeKind::Function:
+          check_function(item->as<NdFunction>(), ctx);
+          break;
+
+        case NodeKind::Class:
+          check_class(item->as<NdClass>(), ctx);
+          break;
+
+        case NodeKind::Enum:
+          check_enum(item->as<NdEnum>(), ctx);
+          break;
+
+        case NodeKind::Namespace:
+          check_namespace(item->as<NdNamespace>(), ctx);
           break;
       }
     }

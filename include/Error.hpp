@@ -155,6 +155,13 @@ namespace fire {
       }
     };
 
+    struct index_out_of_range : e {
+      index_out_of_range(Token const& t, int index, int size) : e(t, "index out of range") {
+        (void)index;
+        (void)size;
+      }
+    };
+
     namespace parses {
       struct expected_catch_block : e {
         expected_catch_block(Token const& t) : e(t, "expected catch block") {
