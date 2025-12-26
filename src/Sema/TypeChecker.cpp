@@ -17,6 +17,8 @@ namespace fire {
     TypeInfo self_ty;
     bool is_method_call = false;
 
+    (void)is_method_call;
+
     size_t argc_give = arg_types.size();
 
     NdEnumeratorDef* nd_en_def = nullptr;
@@ -596,9 +598,13 @@ namespace fire {
     check_scope(node->body, ctx);
   }
 
-  void TypeChecker::check_class(NdClass* node, NdVisitorContext ctx) {}
+  void TypeChecker::check_class(NdClass* node, NdVisitorContext ctx) {
+    (void)node;(void)ctx;
+  }
 
-  void TypeChecker::check_enum(NdEnum* node, NdVisitorContext ctx) {}
+  void TypeChecker::check_enum(NdEnum* node, NdVisitorContext ctx) {
+    (void)node;(void)ctx;
+  }
 
   void TypeChecker::check_namespace(NdNamespace* node, NdVisitorContext ctx) {
     ctx.cur_scope = node->scope_ptr->as<SCNamespace>();

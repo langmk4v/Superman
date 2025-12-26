@@ -8,13 +8,11 @@ namespace fire {
   class Parser {
     SourceFile& source;
 
-    Token* _tok_list;
-
     Token* cur;
 
   public:
     Parser(SourceFile& source, Token* _tok)
-      : source(source), _tok_list(_tok), cur(_tok)
+      : source(source), cur(_tok)
     {
     }
 
