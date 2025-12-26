@@ -8,6 +8,42 @@
 
 namespace fire {
 
+  TypeChecker::ArgumentsCompareResult TypeChecker::compare_arguments(
+      NdCallFunc* cf, NdFunction* fn, BuiltinFunc const* builtin,
+      bool is_var_arg, bool is_method_call,
+      TypeInfo& self_ty, std::vector<TypeInfo> const& defs, std::vector<TypeInfo>& actual) {
+
+    (void)cf;
+    (void)fn;
+    (void)builtin;
+    (void)is_var_arg;
+    (void)is_method_call;
+    (void)self_ty;
+
+    // defs   = 定義側
+    // actual = 呼び出し側
+
+    ArgumentsCompareResult result { };
+
+    if (defs.size() < actual.size()){
+      if(!is_var_arg)
+        result.flags |= ArgumentsCompareResult::TooMany;
+    }
+    else if (defs.size() > actual.size()){
+      result.flags |= ArgumentsCompareResult::TooFew;
+    }
+
+    for(size_t i = 0; i < defs.size(); i++){
+      if(!defs[i].equals(actual[i])){
+        result.flags |= ArgumentsCompareResult::TypeMismatch;
+        result.mismatched_index = i;
+        break;
+      }
+    }
+
+    return result;
+  }
+
   TypeInfo TypeChecker::case_call_func(NdCallFunc* cf, NdVisitorContext ctx) {
     // get argument types
     std::vector<TypeInfo> arg_types;
@@ -40,11 +76,28 @@ namespace fire {
 
       for(BuiltinFunc const* method : builtin_method_table ){
         if(method->name == method_name && method->self_type.equals(self_ty)){
-          todo;
+          auto cmp = compare_arguments(
+            cf, nullptr, method, method->is_var_args, true, self_ty, method->arg_types, arg_types);
+
+          if(cmp.flags & ArgumentsCompareResult::TypeMismatch){
+            throw err::mismatched_types(cf->args[cmp.mismatched_index]->token,
+                method->arg_types[cmp.mismatched_index].to_string(), arg_types[cmp.mismatched_index].to_string());
+          }
+
+          if(cmp.flags & ArgumentsCompareResult::TooMany){
+            throw err::too_many_arguments(cf->args[cmp.mismatched_index]->token);
+          }
+
+          if(cmp.flags & ArgumentsCompareResult::TooFew){
+            throw err::too_few_arguments(cf->args[cmp.mismatched_index]->token);
+          }
+
+          cf->ty = method->result_type;
+          return cf->ty;
         }
       }
 
-      todo;
+      throw err::e(cf->callee->token, "method '" + method_name + "' not found in '" + self_ty.to_string() + "'");
     }
 
 
@@ -475,6 +528,11 @@ namespace fire {
 
   void TypeChecker::check_stmt(Node* node, NdVisitorContext ctx) {
     switch (node->kind) {
+      case NodeKind::Scope: {
+        check_scope(node->as<NdScope>(), ctx);
+        break;
+      }
+
       case NodeKind::Let: {
         auto let = node->as<NdLet>();
 
@@ -574,6 +632,7 @@ namespace fire {
       }
 
       default:
+        alertexpr(static_cast<int>(node->kind));
         assert(node->is_expr_full());
         check_expr(node, ctx);
         break;

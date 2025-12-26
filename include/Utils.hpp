@@ -5,6 +5,8 @@
 
 #include "logger.h"
 
+#define BIT(N) (1 << (N))
+
 #define _COL_RGB(r, g, b) "\e[38;2;" #r ";" #g ";" #b "m"
 
 #define COL_DEFAULT "\033[0m"

@@ -313,6 +313,27 @@ namespace fire {
     TypeChecker(Sema& S) : S(S) {
     }
 
+    struct ArgumentsCompareResult {
+      enum Flags {
+        Default = 0,
+
+        // no match counts.
+        TooMany = BIT(1),
+        TooFew = BIT(2),
+
+        // type mismatch.
+        TypeMismatch = BIT(3),
+      };
+
+      int flags = static_cast<int>(Default);
+      size_t mismatched_index = 0;
+    };
+
+    ArgumentsCompareResult compare_arguments(
+        NdCallFunc* cf, NdFunction* fn, BuiltinFunc const* builtin,
+        bool is_var_arg, bool is_method_call,
+        TypeInfo& self_ty, std::vector<TypeInfo> const& defs, std::vector<TypeInfo>& actual);
+
     TypeInfo case_call_func(NdCallFunc* cf, NdVisitorContext ctx);
     TypeInfo case_method_call(NdCallFunc* cf, NdVisitorContext ctx);
 

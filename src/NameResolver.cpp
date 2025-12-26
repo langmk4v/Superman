@@ -70,8 +70,15 @@ namespace fire {
 
       case NodeKind::Slice: {
         auto slice = node->as<NdExpr>();
-        on_expr(slice->lhs, ctx);
-        on_expr(slice->rhs, ctx);
+        if(slice->lhs)on_expr(slice->lhs, ctx);
+        if(slice->rhs)on_expr(slice->rhs, ctx);
+        break;
+      }
+
+      case NodeKind::Subscript: {
+        auto subscript = node->as<NdExpr>();
+        on_expr(subscript->lhs, ctx);
+        on_expr(subscript->rhs, ctx);
         break;
       }
 
