@@ -16,7 +16,7 @@ namespace fire {
     auto ifs = std::ifstream(this->path);
 
     if (ifs.fail()) {
-      std::cout << "cannot open file: " << this->path << std::endl;
+      std::printf("cannot open file: %s\n",path.c_str());
       std::exit(1);
     }
 

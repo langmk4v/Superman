@@ -1,3 +1,4 @@
+#include <iostream>
 #include "Utils.hpp"
 #include "Error.hpp"
 

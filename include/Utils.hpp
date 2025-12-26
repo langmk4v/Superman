@@ -2,11 +2,6 @@
 
 #include <string>
 #include <vector>
-#include <locale>
-#include <codecvt>
-
-#include <cstdio>
-#include <cstring>
 
 #define _COL_RGB(r, g, b) "\e[38;2;" #r ";" #g ";" #b "m"
 
@@ -43,7 +38,7 @@
 
 #include <cstdlib>
 #include <cassert>
-#include <iostream>
+#include <iosfwd>
 
 #define debug(...) __VA_ARGS__
 
