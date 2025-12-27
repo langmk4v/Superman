@@ -50,6 +50,9 @@ set(FIRE_SOURCE_FILES
   src/main.cpp
   src/Object.cpp
   src/Parser.cpp
+  src/ParserExpr.cpp
+  src/ParserStmt.cpp
+  src/ParserToplevel.cpp
   src/Sema_NameResolver.cpp
   src/Sema_Scopes.cpp
   src/Sema_TypeChecker.cpp

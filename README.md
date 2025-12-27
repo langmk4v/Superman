@@ -3,8 +3,8 @@
 Rust の構文に似ている静的型付けで、実行時コンパイル機能を搭載したインタプリタ言語。
 
 # Language Documentation
-[`日本語`](./DOCUMENT_JPN.RST) <br>
-[`ENGLISH`](./DOCUMENT_ENG.RST) <br>
+[`日本語`](./Document.md) <br>
+[`ENGLISH`](./DocumentEnglish.md) <br>
 
 # Build Step
 ## Requirements
