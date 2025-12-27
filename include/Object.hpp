@@ -1,5 +1,7 @@
 #pragma once
 
+#include <list>
+#include <vector>
 #include <cstdint>
 
 #include "TypeInfo.hpp"
@@ -84,12 +86,50 @@ namespace fire {
 
   struct ObjVector : Object {
     std::vector<Object*> data;
-    Object* clone() const override { return new ObjVector(data); }
+    Object* clone() const override {
+      ObjVector* new_obj = new ObjVector();
+      for(auto& item : data) {
+        new_obj->data.push_back(item->clone());
+      }
+      return new_obj;
+    }
     ObjVector(std::vector<Object*> const& v) : Object(TypeKind::Vector), data(v) {}
     ObjVector() : Object(TypeKind::Vector) {}
     ObjVector& append(Object* value) {
       data.push_back(value);
       return *this;
+    }
+  };
+
+  struct ObjList : Object {
+    std::list<Object*> data;
+    Object* clone() const override {
+      ObjList* new_obj = new ObjList();
+      for(auto& item : data) {
+        new_obj->data.push_back(item->clone());
+      }
+      return new_obj;
+    }
+    ObjList(std::list<Object*> const& l) : Object(TypeKind::List), data(l) {}
+    ObjList() : Object(TypeKind::List) {}
+    ObjList& push(Object* value) {
+      data.push_back(value);
+      return *this;
+    }
+    void push_front(Object* value) {
+      data.push_front(value);
+    }
+    Object* pop_front() {
+      if(data.empty()) return nullptr;
+      Object* ret = data.front();
+      data.pop_front();
+      return ret;
+    }
+    Object* pop_back() {
+      if(data.empty()) return nullptr;
+      Object* ret = data.back();
+      data.pop_back();
+      return ret;
     }
   };
 

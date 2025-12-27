@@ -55,6 +55,40 @@ namespace fire {
     return self;
   }
 
+  //
+  // list::push(self, value) -> list
+  //
+  IMPL(list_push) {
+    ObjList* self = args[0]->as<ObjList>();
+    self->push(args[1]);
+    return self;
+  }
+
+  //
+  // list::push_front(self, value) -> list
+  //
+  IMPL(list_push_front) {
+    ObjList* self = args[0]->as<ObjList>();
+    self->push_front(args[1]);
+    return self;
+  }
+
+  //
+  // list::pop_front(self) -> T
+  //
+  IMPL(list_pop_front) {
+    ObjList* self = args[0]->as<ObjList>();
+    return self->pop_front()->clone();
+  }
+
+  //
+  // list::pop_back(self) -> T
+  //
+  IMPL(list_pop_back) {
+    ObjList* self = args[0]->as<ObjList>();
+    return self->pop_back()->clone();
+  }
+
   BuiltinFunc blt_print{
       .name = "print",
       .is_var_args = true,
@@ -96,4 +130,40 @@ namespace fire {
     .impl = impl_vector_append,
   };
 
+  BuiltinFunc bltm_list_push{
+    .name = "push",
+    .is_var_args = false,
+    .self_type = TypeKind::List,
+    .arg_types = { TypeKind::Any },
+    .result_type = TypeKind::List,
+    .returning_self = true,
+    .impl = impl_list_push,
+  };
+
+  BuiltinFunc bltm_list_pop{
+    .name = "pop",
+    .is_var_args = false,
+    .self_type = TypeKind::List,
+    .result_type = TypeKind::Any,
+    .impl = impl_list_pop_back,
+  };
+
+  BuiltinFunc bltm_list_push_front{
+    .name = "push_front",
+    .is_var_args = false,
+    .self_type = TypeKind::List,
+    .arg_types = { TypeKind::Any },
+    .result_type = TypeKind::List,
+    .returning_self = true,
+    .impl = impl_list_push_front,
+  };
+
+  BuiltinFunc bltm_list_pop_front{
+    .name = "pop_front",
+    .is_var_args = false,
+    .self_type = TypeKind::List,
+    .result_type = TypeKind::Any,
+    .impl = impl_list_pop_front,
+  };
+  
 } // namespace fire

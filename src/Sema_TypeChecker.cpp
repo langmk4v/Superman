@@ -105,7 +105,9 @@ namespace fire {
               throw err::too_few_arguments(cf->args[cmp.mismatched_index]->token);
             }
 
-            cf->ty = this->eval_typename_ty(method->result_type, ctx);
+            if(method->result_type)
+              cf->ty = this->eval_typename_ty(method->result_type, ctx);
+
             cf->ty_evaluated = true;
 
             return cf->ty;
@@ -504,7 +506,18 @@ namespace fire {
       }
 
       case NodeKind::Deref: {
-        todo;
+        NdDeref* deref = node->as<NdDeref>();
+
+        TypeInfo obj_ty = eval_expr_ty(deref->expr, ctx);
+
+        if (obj_ty.is(TypeKind::Option)) {
+          node->ty = obj_ty.parameters[0];
+        }
+        else {
+          throw err::mismatched_types(deref->token, "Option<T>", obj_ty.to_string());
+        }
+
+        break;
       }
 
       case NodeKind::Assign: {
@@ -777,8 +790,13 @@ namespace fire {
 
       case NodeKind::Return: {
         auto nd_ret = node->as<NdReturn>();
+
+        assert(ctx.expected_return_type);
+
         nd_ret->ty = this->eval_expr_ty(nd_ret->expr, ctx);
+        
         nd_ret->ty_evaluated = true;
+        
         break;
       }
 
@@ -823,6 +841,8 @@ namespace fire {
     if (node->result_type) {
       node->result_type->ty = eval_typename_ty(node->result_type, ctx);
       node->result_type->ty_evaluated = true;
+     
+      ctx.expected_return_type = &node->result_type->ty;
     }
 
     check_scope(node->body, ctx);

@@ -260,6 +260,7 @@ namespace fire {
     int loop_depth = 0;
 
     TypeInfo* expected_type = nullptr;
+    TypeInfo* expected_return_type = nullptr;
 
     // expression-types
     bool as_typename = false;
