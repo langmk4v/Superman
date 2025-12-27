@@ -144,7 +144,37 @@ namespace fire {
     auto callee_ty = eval_expr_ty(cf->callee, ctx); // callee_ty = { result_type, [args...] }
 
     if (callee_ty.is(TypeKind::Class)) {
-      todo;
+      NdClass* nd_class = callee_ty.class_node;
+
+      if(argc_give > nd_class->fields.size()){
+        throw err::e(cf->args[argc_give]->token, "too many arguments for constructor of '" + callee_ty.to_string() + "'");
+      }
+      else if(argc_give < nd_class->fields.size()){
+        throw err::e(cf->args[argc_give]->token, "too few arguments for constructor of '" + callee_ty.to_string() + "'");
+      }
+
+      for(size_t i = 0; i < argc_give; i++){
+        // if not key-value-pair, fail.
+        if(!cf->args[i]->is(NodeKind::KeyValuePair)){
+          throw err::e(cf->args[i]->token, "expected field name in '" + callee_ty.to_string() + "'");
+        }
+
+        auto kvp = cf->args[i]->as<NdKeyValuePair>();
+
+        // check name matching
+        if(kvp->key->token.text != nd_class->fields[i]->name.text){
+          throw err::e(kvp->key->token, "field '" + kvp->key->token.text + "' is not found in '" + callee_ty.to_string() + "'");
+        }
+
+        // check type matching
+        if(auto _expected = eval_typename_ty(nd_class->fields[i]->type, ctx); !arg_types[i].equals(_expected)){
+          throw err::mismatched_types(kvp->value->token, _expected.to_string(), arg_types[i].to_string());
+        }
+      }
+
+      cf->ty = callee_ty;
+      cf->ty_evaluated = true;
+      return cf->ty;
     }
 
     if (callee_ty.is(TypeKind::Enum))
