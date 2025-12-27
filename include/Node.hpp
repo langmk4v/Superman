@@ -15,7 +15,8 @@ enum class NodeKind {
   Value,
   Symbol,
   KeyValuePair,
-  Self, // "self" keyword
+  Self,    // "self" keyword
+  NullOpt, // "nullopt" keyword
   DeclType,
   Array,
   Tuple,
@@ -171,15 +172,15 @@ struct NdSymbol : Node {
       : Node(NodeKind::Symbol, de->token), name(de->token), dec(de) {}
 
   NdSymbol(Token const& t, NdDeclType* de = nullptr)
-      : Node(NodeKind::Symbol, t), name(token) {}
+      : Node(NodeKind::Symbol, t), name(token), dec(de) {}
 
   static NdSymbol* from_str(std::string const& name) {
     return new NdSymbol(Token::from_str(name));
   }
 };
 
-struct NdSelf : Node {
-  NdSelf(Token const& t) : Node(NodeKind::Self, t) {}
+struct NdOneToken : Node {
+  NdOneToken(NodeKind kind, Token const& t) : Node(kind, t) {}
 };
 
 struct NdArray : Node {

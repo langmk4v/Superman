@@ -43,9 +43,9 @@ void NameResolver::on_expr(Node* node, NdVisitorContext ctx) {
     on_expr(kvp->value, ctx);
     break;
   }
-  case NodeKind::Self: {
+  case NodeKind::Self:
+  case NodeKind::NullOpt:
     break;
-  }
   case NodeKind::Array: {
     auto arr = node->as<NdArray>();
     for (auto& item : arr->data)

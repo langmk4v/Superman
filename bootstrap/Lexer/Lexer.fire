@@ -38,7 +38,7 @@ namespace firec {
             var c = self.peek();
             var pos = self.pos;
 
-            var loc = SourceLocation(self.source, pos);
+            var loc = SourceLocation(source: self.source, position: pos);
 
             if c.is_digit() {
                 while (!self.is_end() && self.peek().is_digit()) {
@@ -87,6 +87,10 @@ namespace firec {
 
         fn is_end(self) -> bool {
             return self.pos >= self.len;
+        }
+
+        fn peek(self) -> char {
+            return self.source.data[self.pos];
         }
     }
 }

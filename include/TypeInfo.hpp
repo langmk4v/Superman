@@ -21,6 +21,9 @@ enum class TypeKind {
   Option,
   Function,
   Any,
+  Null,
+  NullOpt,
+
   Class, // => クラス名、インスタンスどちらにも使用
   Enum,
 };

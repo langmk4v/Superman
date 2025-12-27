@@ -34,28 +34,31 @@
 #define COL_BK_CYAN "\033[46;5m"
 #define COL_BK_WHITE "\033[47m"
 
-#define todoimpl (fprintf(stderr, "\t#todoimpl at %s:%d\n", __FILE__, __LINE__), exit(22))
+#define todoimpl                                                               \
+  (fprintf(stderr, "\t#todoimpl at %s:%d\n", __FILE__, __LINE__), exit(22))
 #define todo todoimpl
-#define stop                                                                                       \
-  (fprintf(stderr, COL_RED "%.*c\n" COL_WHITE COL_BOLD "stopped at %s:%d\n" COL_DEFAULT, 20, '#',  \
-           __FILE__, __LINE__),                                                                    \
+#define stop                                                                   \
+  (fprintf(stderr,                                                             \
+           COL_RED "%.*c\n" COL_WHITE COL_BOLD                                 \
+                   "stopped at %s:%d\n" COL_DEFAULT,                           \
+           20, '#', __FILE__, __LINE__),                                       \
    exit(10))
 
-#if _FIRE_DEBUG_
+#ifdef _FIRE_DEBUG_
 
-#include <cstdlib>
 #include <cassert>
-#include <iostream>
+#include <cstdlib>
 
-#define debug(...) __VA_ARGS__
+#define debug(e...) (e)
 
 #define alert fprintf(stderr, "\t#alert at %s:%d\n", __FILE__, __LINE__)
 
-#define alertexpr(x)                                                                               \
-  (fprintf(stderr, "\t#alertexpr %s=", #x), (std::cerr << (x)),                                    \
+#define alertexpr(x)                                                           \
+  (fprintf(stderr, "\t#alertexpr %s=", #x), (std::cerr << (x)),                \
    fprintf(stderr, " at %s:%d\n", __FILE__, __LINE__))
 
-#define printd(value) (std::cout << COL_BK_BLUE COL_WHITE << (value) << COL_DEFAULT << std::endl)
+#define printd(value)                                                          \
+  (std::cout << COL_BK_BLUE COL_WHITE << (value) << COL_DEFAULT << std::endl)
 #define printdf(fmt, ...) printf(COL_RED fmt COL_DEFAULT, __VA_ARGS__)
 
 #else
@@ -68,48 +71,52 @@
 #endif
 
 namespace fire {
-  using std::string;
-  using std::string_literals::operator""s;
+using std::string;
+using std::string_literals::operator""s;
 
-  struct Node;
+struct Node;
 
-  std::string node2s(Node* node);
+std::string node2s(Node* node);
 
-  template <typename... Args>
-  std::string format(std::string const& fmt, Args&&... args) {
-    static char buffer[0x1000];
-    std::snprintf(buffer, std::size(buffer), fmt.c_str(), std::forward<Args>(args)...);
-    return buffer;
+template <typename... Args>
+std::string format(std::string const& fmt, Args&&... args) {
+  static char buffer[0x1000];
+  std::snprintf(buffer, std::size(buffer), fmt.c_str(),
+                std::forward<Args>(args)...);
+  return buffer;
+}
+
+template <typename T, typename F>
+std::string join(std::string const& sep, std::vector<T> const& v, F to_s) {
+  std::string s;
+  for (size_t i = 0; i < v.size(); i++) {
+    s += to_s(v[i]);
+    if (i < v.size() - 1)
+      s += sep;
   }
+  return s;
+}
 
-  template <typename T, typename F>
-  std::string join(std::string const& sep, std::vector<T> const& v, F to_s) {
-    std::string s;
-    for (size_t i = 0; i < v.size(); i++) {
-      s += to_s(v[i]);
-      if (i < v.size() - 1) s += sep;
-    }
-    return s;
+static inline std::string join(std::string const& sep,
+                               std::vector<std::string> const& v) {
+  std::string s;
+  for (size_t i = 0; i < v.size(); i++) {
+    s += v[i];
+    if (i < v.size() - 1)
+      s += sep;
   }
+  return s;
+}
 
-  static inline std::string join(std::string const& sep, std::vector<std::string> const& v) {
-    std::string s;
-    for (size_t i = 0; i < v.size(); i++) {
-      s += v[i];
-      if (i < v.size() - 1) s += sep;
-    }
-    return s;
-  }
+static inline std::string operator+(std::string_view a, char const* b) {
+  return std::string(a) + b;
+}
 
-  static inline std::string operator+(std::string_view a, char const* b) {
-    return std::string(a) + b;
-  }
+static inline std::string operator+(char const* a, std::string_view b) {
+  return a + std::string(b);
+}
 
-  static inline std::string operator+(char const* a, std::string_view b) {
-    return a + std::string(b);
-  }
-
-  static inline std::string operator+(std::string_view a, std::string_view b) {
-    return std::string(a) + std::string(b);
-  }
+static inline std::string operator+(std::string_view a, std::string_view b) {
+  return std::string(a) + std::string(b);
+}
 } // namespace fire

@@ -1,9 +1,15 @@
+#ifdef _FIRE_DEBUG_
+#include <iostream>
+#endif
+
 #include "BuiltinFunc.hpp"
 #include "Error.hpp"
 #include "Node.hpp"
 #include "Sema.hpp"
 #include "Utils.hpp"
+
 #define PRINT_LOCATION(TOK) (err::e(TOK, "node").print())
+
 namespace fire {
 TypeChecker::ArgumentsCompareResult TypeChecker::compare_arguments(
     NdCallFunc* cf, NdFunction* fn, BuiltinFunc const* builtin, bool is_var_arg,
@@ -312,6 +318,10 @@ TypeInfo TypeChecker::eval_expr_ty(Node* node, NdVisitorContext ctx) {
     node->ty = make_class_type(ctx.cur_class->get_node());
     break;
   }
+  case NodeKind::NullOpt: {
+    node->ty = TypeInfo(TypeKind::NullOpt);
+    break;
+  }
   case NodeKind::Array: {
     auto arr = node->as<NdArray>();
     std::vector<TypeInfo> elems;
@@ -455,7 +465,7 @@ TypeInfo TypeChecker::eval_expr_ty(Node* node, NdVisitorContext ctx) {
 }
 TypeInfo TypeChecker::eval_typename_ty(NdSymbol* node, NdVisitorContext ctx) {
   ctx.node = node;
-  PRINT_LOCATION(node->token);
+
   switch (node->kind) {
   case NodeKind::Symbol: {
     auto sym = node->as<NdSymbol>();
@@ -535,7 +545,6 @@ void TypeChecker::check_stmt(Node* node, NdVisitorContext ctx) {
   }
   case NodeKind::Let: {
     auto let = node->as<NdLet>();
-    PRINT_LOCATION(let->token);
     assert(let->symbol_ptr);
     if (let->type) {
       let->symbol_ptr->var_info->type = eval_typename_ty(let->type, ctx);

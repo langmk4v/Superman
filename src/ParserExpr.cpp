@@ -110,7 +110,10 @@ Node* Parser::ps_factor() {
   }
 
   if (eat("self"))
-    return new NdSelf(tok);
+    return new NdOneToken(NodeKind::Self, tok);
+
+  if (eat("nullopt"))
+    return new NdOneToken(NodeKind::NullOpt, tok);
 
   if (eat("true")) {
     auto v = new NdValue(tok);
