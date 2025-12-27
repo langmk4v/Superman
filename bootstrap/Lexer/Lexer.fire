@@ -47,11 +47,15 @@ namespace firec {
 
             // else if ...
 
-            else if var (kind, text) = self.find_punct() {
-                return Token(kind: TokenKind::Punctuator(kind), text: text, location: loc);
-            }
+            else {
+                var found = self.find_punct();
 
-            Todo(); // error
+                if found == nullopt {
+                    return nullopt;
+                }
+
+                return Token(kind: TokenKind::Punctuator((*found).<1>), text: (*found).<0>, location: loc);
+            }
         }
 
         fn find_punct(self) -> Option<(string, TokenPunctuators)> {

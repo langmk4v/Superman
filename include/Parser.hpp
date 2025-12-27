@@ -97,8 +97,7 @@ private:
   bool look(TokenPunctuators p) { return cur->punct == p; }
 
   Token* expect(char const* s) {
-    if (cur->text != s)
-      throw err::expected_but_found(*cur, s);
+    if (cur->text != s) throw err::expected_but_found(*cur, s);
     return next();
   }
 

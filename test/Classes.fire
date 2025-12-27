@@ -1,0 +1,17 @@
+class MyClass {
+    var a : int;
+    var b : string;
+
+    // var c : MyClass; // Todo: Detect use of imcomplete-type.
+
+    fn func1() -> MyClass {
+        return MyClass(a: 10, b: "aiueo");
+    }
+}
+
+fn main() -> int {
+    println(MyClass::func1());
+    println(MyClass(a: 10, b: "うわああ"));
+
+    return 0;
+}

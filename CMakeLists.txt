@@ -42,6 +42,7 @@ set(FIRE_SOURCE_FILES
   src/Compiler.cpp
   src/Driver.cpp
   src/Error.cpp
+  src/EvalNode.cpp
   src/fs_impl.cpp
   src/FSHelper.cpp
   src/IR.cpp

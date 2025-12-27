@@ -248,7 +248,8 @@ struct NdLet : Node {
   int index = 0;
   Symbol* symbol_ptr = nullptr;
 
-  std::vector<Token> placeholders; // when unpacking tuple.
+  std::vector<Token>
+      placeholders; // when unpacking tuple or array or class-instance.
 
   NdLet(Token const& t, Token const& name);
   ~NdLet();

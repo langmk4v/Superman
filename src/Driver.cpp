@@ -7,6 +7,7 @@
 #include "Token.hpp"
 #include "Parser.hpp"
 #include "Sema.hpp"
+#include "EvalNode.hpp"
 #include "Lower.hpp"
 
 #include "Driver.hpp"
@@ -85,9 +86,16 @@ int Driver::main(int argc, char** argv) {
 
       Sema::analyze_all(mod);
 
-      IR::Low::LIR* low_ir = NodeLower::lower_full(mod);
+      NodeEvaluator E{NodeEvaluatorConfig()};
 
-      (void)low_ir;
+      E.push_call_stack();
+
+      E.eval_stmt(mod->main_fn->body);
+
+      E.pop_call_stack();
+
+      // IR::Low::LIR* low_ir = NodeLower::lower_full(mod);
+      // (void)low_ir;
 
       // if
       // (!mod->main_fn->scope_ptr->as<FunctionScope>()->result_type.equals(TypeInfo(TypeKind::Int)))

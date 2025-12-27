@@ -73,5 +73,7 @@
         "thread": "cpp",
         "typeindex": "cpp",
         "valarray": "cpp"
-    }
+    },
+    "editor.smoothScrolling": true,
+    "workbench.list.smoothScrolling": true
 }

@@ -27,10 +27,16 @@ NdLet* Parser::ps_let(bool expect_semi) {
   if (expect_semi) expect(";");
   return let;
 }
+
 Node* Parser::ps_stmt() {
   auto& tok = *cur;
+
   if (look("{")) return ps_scope();
-  if (look("var")) return ps_let();
+
+  if (look("var")) {
+    return ps_let();
+  }
+
   if (eat("try")) {
     auto x = new NdTry(tok);
     x->body = ps_scope();
