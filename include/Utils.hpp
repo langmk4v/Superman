@@ -35,8 +35,11 @@
 #define COL_BK_WHITE "\033[47m"
 
 #define todoimpl (fprintf(stderr, "\t#todoimpl at %s:%d\n", __FILE__, __LINE__), exit(22))
-
 #define todo todoimpl
+#define stop                                                                                       \
+  (fprintf(stderr, COL_RED "%.*c\n" COL_WHITE COL_BOLD "stopped at %s:%d\n" COL_DEFAULT, 20, '#',  \
+           __FILE__, __LINE__),                                                                    \
+   exit(10))
 
 #if _FIRE_DEBUG_
 
@@ -48,8 +51,9 @@
 
 #define alert fprintf(stderr, "\t#alert at %s:%d\n", __FILE__, __LINE__)
 
-#define alertexpr(x)                                                                                                   \
-  (fprintf(stderr, "\t#alertexpr %s=", #x), (std::cerr << (x)), fprintf(stderr, " at %s:%d\n", __FILE__, __LINE__))
+#define alertexpr(x)                                                                               \
+  (fprintf(stderr, "\t#alertexpr %s=", #x), (std::cerr << (x)),                                    \
+   fprintf(stderr, " at %s:%d\n", __FILE__, __LINE__))
 
 #define printd(value) (std::cout << COL_BK_BLUE COL_WHITE << (value) << COL_DEFAULT << std::endl)
 #define printdf(fmt, ...) printf(COL_RED fmt COL_DEFAULT, __VA_ARGS__)

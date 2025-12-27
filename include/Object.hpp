@@ -9,6 +9,20 @@
 namespace fire {
 
   struct ObjNone;
+  struct ObjInt;
+  struct ObjFloat;
+  struct ObjBool;
+  struct ObjChar;
+  struct ObjString;
+  struct ObjVector;
+  struct ObjList;
+  struct ObjTuple;
+  struct ObjDict;
+  struct ObjOption;
+  struct ObjFunctor;
+  struct ObjAny;
+  struct ObjInstance;
+  struct ObjEnumerator;
 
   struct Object {
     TypeInfo type;
@@ -26,12 +40,26 @@ namespace fire {
       return (T const*)this;
     }
 
+    ObjInt* as_int() { return as<ObjInt>(); }
+    ObjFloat* as_float() { return as<ObjFloat>(); }
+    ObjBool* as_bool() { return as<ObjBool>(); }
+    ObjChar* as_char() { return as<ObjChar>(); }
+    ObjString* as_string() { return as<ObjString>(); }
+    ObjVector* as_vector() { return as<ObjVector>(); }
+    ObjList* as_list() { return as<ObjList>(); }
+    ObjTuple* as_tuple() { return as<ObjTuple>(); }
+    ObjDict* as_dict() { return as<ObjDict>(); }
+    ObjOption* as_option() { return as<ObjOption>(); }
+    ObjFunctor* as_functor() { return as<ObjFunctor>(); }
+    ObjAny* as_any() { return as<ObjAny>(); }
+    ObjInstance* as_instance() { return as<ObjInstance>(); }
+    ObjEnumerator* as_enumerator() { return as<ObjEnumerator>(); }
+
     std::string to_string() const;
 
     virtual Object* clone() const = 0;
 
     virtual ~Object() = default;
-
   protected:
     Object(TypeInfo type) : type(std::move(type)) {}
   };
@@ -70,16 +98,16 @@ namespace fire {
 
     ObjString& append(ObjChar*);
     ObjString& append(ObjString*);
-    
+
     Object* clone() const override { return new ObjString(data); }
 
     static ObjString* from_char16_ptr_move(char16_t* p) {
       auto x = new ObjString();
-      for(;*p;p++)x->data.push_back(*p);
+      for (; *p; p++) x->data.push_back(*p);
       return x;
     }
-    
-    ObjString():Object(TypeKind::String){}
+
+    ObjString() : Object(TypeKind::String) {}
     ObjString(std::vector<char16_t> const& s) : Object(TypeKind::String), data(s) {}
     ObjString(ObjChar* ch) : Object(TypeKind::String), data(std::vector<char16_t>(1, ch->val)) {}
   };
@@ -88,9 +116,7 @@ namespace fire {
     std::vector<Object*> data;
     Object* clone() const override {
       ObjVector* new_obj = new ObjVector();
-      for(auto& item : data) {
-        new_obj->data.push_back(item->clone());
-      }
+      for (auto& item : data) { new_obj->data.push_back(item->clone()); }
       return new_obj;
     }
     ObjVector(std::vector<Object*> const& v) : Object(TypeKind::Vector), data(v) {}
@@ -105,9 +131,7 @@ namespace fire {
     std::list<Object*> data;
     Object* clone() const override {
       ObjList* new_obj = new ObjList();
-      for(auto& item : data) {
-        new_obj->data.push_back(item->clone());
-      }
+      for (auto& item : data) { new_obj->data.push_back(item->clone()); }
       return new_obj;
     }
     ObjList(std::list<Object*> const& l) : Object(TypeKind::List), data(l) {}
@@ -116,17 +140,15 @@ namespace fire {
       data.push_back(value);
       return *this;
     }
-    void push_front(Object* value) {
-      data.push_front(value);
-    }
+    void push_front(Object* value) { data.push_front(value); }
     Object* pop_front() {
-      if(data.empty()) return nullptr;
+      if (data.empty()) return nullptr;
       Object* ret = data.front();
       data.pop_front();
       return ret;
     }
     Object* pop_back() {
-      if(data.empty()) return nullptr;
+      if (data.empty()) return nullptr;
       Object* ret = data.back();
       data.pop_back();
       return ret;
