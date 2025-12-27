@@ -2,11 +2,12 @@
 
 #include <cstring>
 #include <cstddef>
-#include <string_view>
+
+#include <string>
+
+#include "SourceFile.hpp"
 
 namespace fire {
-  struct SourceFile;
-
   struct Object;
 
   enum class TokenKind {
@@ -64,7 +65,7 @@ namespace fire {
     Punct_BitAnd, // &
     Punct_BitOr,  // |
     Punct_BitXor, // ^
-    
+
     // other
     Punct_Inclement, // ++
     Punct_Declement, // --
@@ -93,7 +94,7 @@ namespace fire {
 
     TokenPunctuators punct = TokenPunctuators::Punct_None;
 
-    std::string_view text;
+    std::string text;
 
     Token* prev = nullptr;
     Token* next = nullptr;
@@ -107,9 +108,13 @@ namespace fire {
 
     Token(TokenKind kind = TokenKind::Unknown) : kind(kind) {}
 
-    Token(TokenKind k, std::string_view text, Token* prev, SourceFile const* src, size_t pos)
+    Token(TokenKind k, std::string const& text, Token* prev, SourceFile const* src, size_t pos)
         : kind(k), text(text), prev(prev), source(src), pos(pos) {
       if (prev) prev->next = this;
+    }
+
+    static Token from_str(std::string const& text, TokenKind kind = TokenKind::Identifier) {
+      return Token(kind, text, nullptr, SourceFile::GetCurrentReferenced(), 0);
     }
 
     bool is(TokenKind k) const { return kind == k; }
@@ -119,6 +124,8 @@ namespace fire {
     bool is_literal() const { return TokenKind::Int <= kind && kind <= TokenKind::String; }
 
     static TokenPunctuators get_punct(char const* str);
+
+    static char const* GetStringOfPunctuator(TokenPunctuators p);
   };
 
   struct _token_punct_str_map_ {

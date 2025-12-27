@@ -38,6 +38,12 @@ namespace fire {
     std::string get_folder() const;
 
     char operator[](size_t const _index) const { return data[_index]; }
+
+    static SourceFile const* GetCurrentReferenced();
+
+    static void SetCurrentReferenced(SourceFile const* src);
+
+    static void RestoreCurrentReferenced();
   };
 
 } // namespace fire

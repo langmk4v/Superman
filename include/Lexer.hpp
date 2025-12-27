@@ -13,7 +13,18 @@ namespace fire {
     size_t const _len;
 
   public:
-    Lexer(SourceFile const* source) : _source(source), _pos(0), _len(source->length) {}
+    Lexer(SourceFile const* source)
+      : _source(source),
+        _pos(0),
+        _len(source->length)
+    {
+      SourceFile::SetCurrentReferenced(source);
+    }
+
+    ~Lexer()
+    {
+      SourceFile::RestoreCurrentReferenced();
+    }
 
     Token* lex();
 

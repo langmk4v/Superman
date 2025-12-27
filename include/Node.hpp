@@ -13,6 +13,8 @@ namespace fire {
   struct BuiltinFunc;
 
   enum class NodeKind {
+    PlaceHolder,
+
     Value,
 
     Symbol,
@@ -109,6 +111,10 @@ namespace fire {
     Module,
   };
 
+  enum class NodePlaceholders {
+    TemplateParam,
+  };
+
   struct NdFunction;
 
   //
@@ -149,9 +155,26 @@ namespace fire {
     }
 
   protected:
-    Node(NodeKind k, Token& t) : kind(k), token(t), text(t.text) {
-    }
-    Node(NodeKind kind, std::string const& text) : kind(kind), text(text) {
+    Node(NodeKind k, Token const& t) : kind(k), token(t), text(t.text) { }
+    Node(NodeKind kind, std::string const& text) : kind(kind), text(text) { }
+  };
+
+  struct NdSymbol;
+
+  struct NdPlaceHolder : Node {
+
+    NodePlaceholders place_holder_kind;
+
+    //
+    // for TemplateParam
+    size_t tp_param_index = 0;
+    NdSymbol* tp_param_location = nullptr;        // "U" of T<U>
+    NdSymbol* tp_param_parent_type_nd = nullptr;  // "T<U>"
+
+    NdPlaceHolder(NodePlaceholders place_holder_kind , Token& t)
+      : Node(NodeKind::PlaceHolder, t),
+        place_holder_kind(place_holder_kind)
+    {
     }
   };
 
@@ -208,14 +231,18 @@ namespace fire {
       return is_local_var || is_global_var;
     }
 
+    bool is_single() const {
+      return !next;
+    }
+
     NdSymbol(NdDeclType* de) : Node(NodeKind::Symbol, de->token), name(de->token), dec(de) {
     }
 
-    NdSymbol(Token& t) : Node(NodeKind::Symbol, t), name(token) {
+    NdSymbol(Token const& t) : Node(NodeKind::Symbol, t), name(token) {
     }
 
-    bool is_single() const {
-      return !next;
+    static NdSymbol* from_str(std::string const& name) {
+      return new NdSymbol(Token::from_str(name));
     }
   };
 

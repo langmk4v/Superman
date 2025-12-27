@@ -12,6 +12,24 @@
 namespace fire {
   std::unordered_map<std::string, SourceFile*> all_sources;
 
+  static SourceFile const* CurrentReferencedPtr = nullptr;
+
+  static std::vector<SourceFile const*> ReferencedStack;
+
+  SourceFile const* SourceFile::GetCurrentReferenced() {
+    return CurrentReferencedPtr;
+  }
+
+  void SourceFile::SetCurrentReferenced(SourceFile const* src) {
+    ReferencedStack.push_back(CurrentReferencedPtr);
+    CurrentReferencedPtr = src;
+  }
+
+  void SourceFile::RestoreCurrentReferenced() {
+    CurrentReferencedPtr = ReferencedStack.back();
+    ReferencedStack.pop_back();
+  }
+
   SourceFile::SourceFile(std::string const& _path) : path(std::filesystem::absolute(_path)) {
     auto ifs = std::ifstream(this->path);
 

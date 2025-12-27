@@ -43,7 +43,8 @@ namespace fire {
   IMPL(string_starts) {
     ObjString* self = args[0]->as<ObjString>();
     ObjString* prefix = args[1]->as<ObjString>();
-    return new ObjBool(std::memcmp(self->data.data(), prefix->data.data(), prefix->data.size() * sizeof(char16_t)) == 0);
+    return new ObjBool(std::memcmp(self->data.data(), prefix->data.data(),
+                                   prefix->data.size() * sizeof(char16_t)) == 0);
   }
 
   //
@@ -104,66 +105,66 @@ namespace fire {
   };
 
   BuiltinFunc bltm_string_length{
-    .name = "length",
-    .is_var_args = false,
-    .self_type = TypeKind::String,
-    .result_type = TypeKind::Int,
-    .impl = impl_string_length,
+      .name = "length",
+      .is_var_args = false,
+      .self_type = TypeKind::String,
+      .result_type = TypeKind::Int,
+      .impl = impl_string_length,
   };
 
   BuiltinFunc bltm_string_starts{
-    .name = "starts",
-    .is_var_args = false,
-    .self_type = TypeKind::String,
-    .arg_types = { TypeKind::String },
-    .result_type = TypeKind::Bool,
-    .impl = impl_string_starts,
+      .name = "starts",
+      .is_var_args = false,
+      .self_type = TypeKind::String,
+      .arg_types = {TypeKind::String},
+      .result_type = TypeKind::Bool,
+      .impl = impl_string_starts,
   };
 
   BuiltinFunc bltm_vector_append{
-    .name = "append",
-    .is_var_args = false,
-    .self_type = TypeKind::Vector,
-    .arg_types = { TypeKind::Any },
-    .result_type = TypeKind::Vector,
-    .returning_self = true,
-    .impl = impl_vector_append,
+      .name = "append",
+      .is_var_args = false,
+      .self_type = TypeKind::Vector,
+      .arg_types = {TypeKind::Any},
+      .result_type = TypeKind::Vector,
+      .returning_self = true,
+      .impl = impl_vector_append,
   };
 
   BuiltinFunc bltm_list_push{
-    .name = "push",
-    .is_var_args = false,
-    .self_type = TypeKind::List,
-    .arg_types = { TypeKind::Any },
-    .result_type = TypeKind::List,
-    .returning_self = true,
-    .impl = impl_list_push,
+      .name = "push",
+      .is_var_args = false,
+      .self_type = TypeKind::List,
+      .arg_types = {TypeKind::Any},
+      .result_type = TypeKind::List,
+      .returning_self = true,
+      .impl = impl_list_push,
   };
 
   BuiltinFunc bltm_list_pop{
-    .name = "pop",
-    .is_var_args = false,
-    .self_type = TypeKind::List,
-    .result_type = TypeKind::Any,
-    .impl = impl_list_pop_back,
+      .name = "pop",
+      .is_var_args = false,
+      .self_type = TypeKind::List,
+      .result_type = TypeKind::Any,
+      .impl = impl_list_pop_back,
   };
 
   BuiltinFunc bltm_list_push_front{
-    .name = "push_front",
-    .is_var_args = false,
-    .self_type = TypeKind::List,
-    .arg_types = { TypeKind::Any },
-    .result_type = TypeKind::List,
-    .returning_self = true,
-    .impl = impl_list_push_front,
+      .name = "push_front",
+      .is_var_args = false,
+      .self_type = TypeKind::List,
+      .arg_types = {TypeKind::Any},
+      .result_type = TypeKind::List,
+      .returning_self = true,
+      .impl = impl_list_push_front,
   };
 
   BuiltinFunc bltm_list_pop_front{
-    .name = "pop_front",
-    .is_var_args = false,
-    .self_type = TypeKind::List,
-    .result_type = TypeKind::Any,
-    .impl = impl_list_pop_front,
+      .name = "pop_front",
+      .is_var_args = false,
+      .self_type = TypeKind::List,
+      .result_type = TypeKind::Any,
+      .impl = impl_list_pop_front,
   };
-  
+
 } // namespace fire

@@ -76,11 +76,12 @@ namespace fire::IR::High {
   struct IRVardef : IRStmt {
     std::string name;
     IRExpr* expr = nullptr;
-    IRVardef(std::string const& name, IRExpr* expr) : IRStmt(StmtKind::Vardef), name(name), expr(expr) {}
+    IRVardef(std::string const& name, IRExpr* expr)
+        : IRStmt(StmtKind::Vardef), name(name), expr(expr) {}
   };
 
   struct IRIf : IRStmt {
-              IRExpr* cond = nullptr;
+    IRExpr* cond = nullptr;
     IRStmt* then_stmt = nullptr;
     IRStmt* else_stmt = nullptr;
     IRIf(IRExpr* cond, IRStmt* then_stmt, IRStmt* else_stmt)
@@ -88,7 +89,7 @@ namespace fire::IR::High {
   };
 
   struct IRLoop : IRStmt {
-      IRScope* body = nullptr;
+    IRScope* body = nullptr;
     IRLoop(IRScope* body) : IRStmt(StmtKind::Loop), body(body) {}
   };
 
@@ -117,7 +118,8 @@ namespace fire::IR::High {
     IRScope* finally_block = nullptr;
 
     IRTryCatch(IRScope* body, std::vector<Catch> catches, IRScope* finally_block)
-        : IRStmt(StmtKind::TryCatch), body(body), catches(std::move(catches)), finally_block(finally_block) {}
+        : IRStmt(StmtKind::TryCatch), body(body), catches(std::move(catches)),
+          finally_block(finally_block) {}
   };
 
   struct IRFunction : Base {
@@ -150,11 +152,9 @@ namespace fire::IR::High {
 } // namespace fire::IR::High
 
 namespace fire::IR::Middle {
-  struct MIR {
-  };
+  struct MIR {};
 } // namespace fire::IR::Middle
 
 namespace fire::IR::Low {
-  struct LIR {
-  };
+  struct LIR {};
 } // namespace fire::IR::Low

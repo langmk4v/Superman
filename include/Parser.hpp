@@ -11,10 +11,7 @@ namespace fire {
     Token* cur;
 
   public:
-    Parser(SourceFile& source, Token* _tok)
-      : source(source), cur(_tok)
-    {
-    }
+    Parser(SourceFile& source, Token* _tok) : source(source), cur(_tok) {}
 
     NdSymbol* ps_symbol(bool as_typename = false);
     NdSymbol* ps_type_name();
@@ -41,9 +38,7 @@ namespace fire {
 
     NdTemplatableBase& _parse_template_param_defs(NdTemplatableBase& B) {
       if (eat("<")) {
-        do {
-          B.parameter_defs.emplace_back(ps_type_name());
-        } while (!is_end() && eat(","));
+        do { B.parameter_defs.emplace_back(ps_type_name()); } while (!is_end() && eat(","));
         expect(">");
       }
       return B;
@@ -72,25 +67,23 @@ namespace fire {
     NdModule* parse();
 
   private:
-    bool is_end() {
-      return cur->is(TokenKind::Eof);
-    }
-    bool eat(char const* s) {
-      return cur->text == s ? (next(), true) : false;
-    }
-    bool look(char const* s) {
-      return cur->text == s;
-    }
+    bool is_end() { return cur->is(TokenKind::Eof); }
+    bool eat(char const* s) { return cur->text == s ? (next(), true) : false; }
+    bool eat(TokenPunctuators p) { return cur->punct == p ? (next(), true) : false; }
+    bool look(char const* s) { return cur->text == s; }
+    bool look(TokenPunctuators p) { return cur->punct == p; }
     Token* expect(char const* s) {
       if (cur->text != s) throw err::expected_but_found(*cur, s);
+      return next();
+    }
+    Token* expect(TokenPunctuators p) {
+      if (cur->punct != p) throw err::expected_but_found(*cur, Token::GetStringOfPunctuator(p));
       return next();
     }
     Token* expect_ident() {
       if (cur->kind != TokenKind::Identifier) throw err::expected_identifier_tok(*cur);
       return next();
     }
-    Token* next() {
-      return (cur=cur->next)->prev;
-    }
+    Token* next() { return (cur = cur->next)->prev; }
   };
 } // namespace fire

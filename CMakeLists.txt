@@ -3,9 +3,15 @@ project(fire C CXX)
 message("project name is automaically set as: ${PROJECT_NAME}")
 
 set(PROJECT_VERSION 1.0.0)
-set(CMAKE_CXX_STANDARD 17)
+
+set(CMAKE_C_STANDARD 17)
+
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_CXX_EXTENSIONS OFF)
+
+set(CMAKE_C_COMPILER gcc)
+set(CMAKE_CXX_COMPILER g++)
 
 set(FIRE_HEADER_FILES
     include/BuiltinFunc.hpp

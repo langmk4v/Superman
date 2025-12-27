@@ -1,5 +1,3 @@
 #include "Node.hpp"
 
-namespace fire {
-
-}
+namespace fire {}

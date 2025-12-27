@@ -13,15 +13,15 @@ namespace fire {
     class DirectoryWrapper {
     public:
       explicit DirectoryWrapper(std::string const& path) : impl(fs_dir_create(path.c_str())) {
-        if (!impl) {
-          throw std::invalid_argument("path is not a directory or not exists");
-        }
+        if (!impl) { throw std::invalid_argument("path is not a directory or not exists"); }
       }
 
       DirectoryWrapper(DirectoryWrapper const&) = delete;
       DirectoryWrapper& operator=(DirectoryWrapper const&) = delete;
 
-      DirectoryWrapper(DirectoryWrapper&& other) noexcept : impl(other.impl) { other.impl = nullptr; }
+      DirectoryWrapper(DirectoryWrapper&& other) noexcept : impl(other.impl) {
+        other.impl = nullptr;
+      }
 
       DirectoryWrapper& operator=(DirectoryWrapper&& other) noexcept {
         if (this != &other) {
@@ -87,7 +87,8 @@ namespace fire {
 
     static DirectoryWrapper GetDirectory(std::string const& path) { return DirectoryWrapper(path); }
 
-    static std::vector<std::string> FindFileInDirectory(std::string const& filename, std::string const& directory,
+    static std::vector<std::string> FindFileInDirectory(std::string const& filename,
+                                                        std::string const& directory,
                                                         bool recursive = false) {
       return DirectoryWrapper(directory).FindFile(filename, recursive);
     }

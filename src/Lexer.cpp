@@ -30,7 +30,7 @@ namespace fire {
       cur = tokenize(peek(), cur);
     }
 
-    cur->next = new Token(TokenKind::Eof, std::string_view(), cur, _source, _pos);
+    cur->next = new Token(TokenKind::Eof, "", cur, _source, _pos);
 
     size_t i = 0, line = 1, col = 1;
 
@@ -64,7 +64,7 @@ namespace fire {
         if (peek() == 'f') _pos++, len++;
       }
       pass_space();
-      return new Token(kind, std::string_view(str, len), prev, _source, pos);
+      return new Token(kind, std::string(str, len), prev, _source, pos);
     }
 
     // a-z|A-Z|_
@@ -73,7 +73,7 @@ namespace fire {
       while (!is_end() && (std::isalnum((c = peek())) || c == '_'))
         _pos++, len++;
       pass_space();
-      return new Token(kind, std::string_view(str, len), prev, _source, pos);
+      return new Token(kind, std::string(str, len), prev, _source, pos);
     }
 
     // char or string
@@ -105,13 +105,13 @@ namespace fire {
       _pos++;
       pass_space();
       ss_->push_back(c);
-      return new Token(kind, std::string_view(ss_->data(),ss_->length()), prev, _source, pos);
+      return new Token(kind, std::string(ss_->data(),ss_->length()), prev, _source, pos);
     }
 
     else if (_token_punct_str_map_ const* p = find_punct(getptr()); p != nullptr) {
       _pos+=std::strlen(p->str);
       pass_space();
-      auto tok= new Token(TokenKind::Punctuator, std::string_view(p->str), prev, _source, pos);
+      auto tok= new Token(TokenKind::Punctuator, std::string(p->str), prev, _source, pos);
       tok->punct=p->punct;
       return tok;
     }

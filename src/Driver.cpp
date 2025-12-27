@@ -3,7 +3,6 @@
 #include <filesystem>
 #include <cstring>
 
-
 #include "Lexer.hpp"
 #include "Token.hpp"
 #include "Parser.hpp"
@@ -16,25 +15,20 @@ namespace fire {
 
   Driver* __instance = nullptr;
 
-  Driver::Driver() {
-    __instance = this;
-  }
+  Driver::Driver() { __instance = this; }
 
   Driver::~Driver() {
-    for(auto&&s:this->inputs)
-      delete s;
+    for (auto&& s : this->inputs) delete s;
   }
 
-  Driver* Driver::get_instance() {
-    return __instance;
-  }
+  Driver* Driver::get_instance() { return __instance; }
 
   int Driver::main(int argc, char** argv) {
     this->cwd = std::filesystem::current_path().string();
 
     bool opt_print_ast = false;
     bool opt_print_tokens = false;
-    
+
     for (int i = 1; i < argc; i++) {
       char const* arg = argv[i];
 
@@ -43,11 +37,9 @@ namespace fire {
 
         if (std::strcmp(arg, "print-ast") == 0) {
           opt_print_ast = true;
-        }
-        else if(std::strcmp(arg,"print-tokens")==0){
-          opt_print_tokens=true;
-        }
-        else {
+        } else if (std::strcmp(arg, "print-tokens") == 0) {
+          opt_print_tokens = true;
+        } else {
           std::cout << "unknown option: " << arg << std::endl;
           return -1;
         }
@@ -69,16 +61,13 @@ namespace fire {
         auto tok = source->lex();
 
         if (opt_print_tokens) {
-          for(Token*t=tok;t;t=t->next)
-            std::cout<<t->text<<" ";
-          std::cout<<std::endl;
+          for (Token* t = tok; t; t = t->next) std::cout << t->text << " ";
+          std::cout << std::endl;
         }
 
         auto mod = source->parse();
 
-        if (opt_print_ast) {
-          std::cout << node2s(mod) << std::endl;
-        }
+        if (opt_print_ast) { std::cout << node2s(mod) << std::endl; }
 
         mod->name = "__main__";
 
@@ -106,11 +95,7 @@ namespace fire {
         // Compiler::compile_full(IR::from_node(mod));
 
         return 0;
-      }
-      catch (int n) {
-        printf("%d\n", n);
-      }
-      catch (err::e& e) {
+      } catch (int n) { printf("%d\n", n); } catch (err::e& e) {
         e.print();
       }
     }

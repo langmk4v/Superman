@@ -84,6 +84,14 @@ namespace fire {
     return TokenPunctuators::Punct_None;
   }
 
+  char const* Token::GetStringOfPunctuator(TokenPunctuators p) {
+#pragma GCC unroll 65534
+    for (auto const& [punct, str] : table) {
+      if (punct == p) { return str; }
+    }
+    return nullptr;
+  }
+
 #ifdef _FIRE_DEBUG_
   void check_duplications() {
     std::set<std::string> seen;
