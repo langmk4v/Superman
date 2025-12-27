@@ -8,9 +8,8 @@ https://github.com/rui314/mold
 
 ```bash
 mkdir build
-cd build
-cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXE_LINKER_FLAGS="-fuse-ld=mold" ..
-make
+cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXE_LINKER_FLAGS="-fuse-ld=mold" -B build
+cmake --build build -j${nproc}
 ```
 
 Discord サーバー：
