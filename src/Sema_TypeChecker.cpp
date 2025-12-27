@@ -193,8 +193,7 @@ TypeInfo TypeChecker::case_construct_enumerator(
   // one variant
   else if (en_def->type == NdEnumeratorDef::OneType) {
     if (argc_give == 0) {
-      err::emitters::expected_one_variant_for_enumerator(cf->args[0]->token,
-                                                         en_def);
+      err::emitters::expected_one_variant_for_enumerator(cf->token, en_def);
     } else if (argc_give >= 2) {
       err::emitters::too_many_variants_for_enumerator(cf->args[0]->token,
                                                       en_def);
@@ -419,17 +418,27 @@ TypeInfo TypeChecker::eval_expr_ty(Node* node, NdVisitorContext ctx) {
     node->ty = obj_ty.parameters[ge->index];
     break;
   }
-  case NodeKind::Inclement: {
-    todo;
-  }
+  case NodeKind::Inclement:
   case NodeKind::Declement: {
-    todo;
+    auto inc = node->as<NdInclementDeclement>();
+    auto ty = eval_expr_ty(inc->expr, ctx);
+    if (!ty.is(TypeKind::Int)) {
+      throw err::mismatched_types(inc->token, "int", ty.to_string());
+    }
+    node->ty = ty;
+    break;
   }
   case NodeKind::BitNot: {
     todo;
   }
   case NodeKind::Not: {
-    todo;
+    auto x = node->as<NdOneExprWrap>();
+    auto ty = eval_expr_ty(x->expr, ctx);
+    if (!ty.is(TypeKind::Bool)) {
+      throw err::mismatched_types(x->token, "bool", ty.to_string());
+    }
+    node->ty = ty;
+    break;
   }
   case NodeKind::Ref: {
     todo;
@@ -546,6 +555,9 @@ void TypeChecker::check_stmt(Node* node, NdVisitorContext ctx) {
   }
   case NodeKind::Let: {
     auto let = node->as<NdLet>();
+    if (!let->symbol_ptr) {
+      PRINT_LOCATION(let->token);
+    }
     assert(let->symbol_ptr);
     if (let->type) {
       let->symbol_ptr->var_info->type = eval_typename_ty(let->type, ctx);

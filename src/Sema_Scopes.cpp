@@ -90,10 +90,15 @@ SCIf::SCIf(NdIf* node, Scope* parent) : Scope(ScopeKind::If, node, parent) {
   if (node->vardef) {
     var = Sema::get_instance()->new_variable_symbol(node->vardef);
     symtable.append(var);
+    node->vardef->symbol_ptr = var;
   }
   then_scope = new SCScope(node->thencode, this);
-  if (node->elsecode && node->elsecode->is(NodeKind::Scope)) {
-    else_scope = new SCScope(node->elsecode->as<NdScope>(), this);
+  if (node->elsecode) {
+    if (node->elsecode->is(NodeKind::Scope)) {
+      else_scope = new SCScope(node->elsecode->as<NdScope>(), this);
+    } else {
+      else_scope = new SCIf(node->elsecode->as<NdIf>(), this);
+    }
   }
 }
 

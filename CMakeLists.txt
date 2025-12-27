@@ -87,7 +87,6 @@ target_compile_options(fire PRIVATE
   -Wextra
   -Wno-switch
   -D_FIRE_DEBUG_=1
-  -fsanitize=address
 )
 endif()
 

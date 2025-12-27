@@ -8,8 +8,7 @@ void NameResolver::on_typename(Node* node, NdVisitorContext ctx) {
   switch (node->kind) {
   case NodeKind::Symbol: {
     auto sym = node->as<NdSymbol>();
-    if (sym->dec)
-      on_expr(sym->dec->expr, ctx);
+    if (sym->dec) on_expr(sym->dec->expr, ctx);
     on_expr(sym, ctx);
     break;
   }
@@ -60,10 +59,8 @@ void NameResolver::on_expr(Node* node, NdVisitorContext ctx) {
   }
   case NodeKind::Slice: {
     auto slice = node->as<NdExpr>();
-    if (slice->lhs)
-      on_expr(slice->lhs, ctx);
-    if (slice->rhs)
-      on_expr(slice->rhs, ctx);
+    if (slice->lhs) on_expr(slice->lhs, ctx);
+    if (slice->rhs) on_expr(slice->rhs, ctx);
     break;
   }
   case NodeKind::Subscript: {
@@ -93,14 +90,10 @@ void NameResolver::on_expr(Node* node, NdVisitorContext ctx) {
     on_expr(get->expr, ctx);
     break;
   }
-  case NodeKind::Inclement: {
-    auto inc = node->as<NdInclement>();
-    on_expr(inc->expr, ctx);
-    break;
-  }
+  case NodeKind::Inclement:
   case NodeKind::Declement: {
-    auto dec = node->as<NdDeclement>();
-    on_expr(dec->expr, ctx);
+    auto inc = node->as<NdInclementDeclement>();
+    on_expr(inc->expr, ctx);
     break;
   }
 
@@ -148,21 +141,16 @@ void NameResolver::on_stmt(Node* node, NdVisitorContext ctx) {
   }
   case NodeKind::Let: {
     auto x = node->as<NdLet>();
-    if (x->type)
-      on_typename(x->type, ctx);
-    if (x->init)
-      on_expr(x->init, ctx);
+    if (x->type) on_typename(x->type, ctx);
+    if (x->init) on_expr(x->init, ctx);
     break;
   }
   case NodeKind::If: {
     auto x = node->as<NdIf>();
-    if (x->vardef)
-      on_stmt(x->vardef, ctx);
-    if (x->cond)
-      on_expr(x->cond, ctx);
+    if (x->vardef) on_stmt(x->vardef, ctx);
+    if (x->cond) on_expr(x->cond, ctx);
     on_stmt(x->thencode, ctx);
-    if (x->elsecode)
-      on_stmt(x->elsecode, ctx);
+    if (x->elsecode) on_stmt(x->elsecode, ctx);
     break;
   }
   case NodeKind::For: {
@@ -179,10 +167,8 @@ void NameResolver::on_stmt(Node* node, NdVisitorContext ctx) {
   case NodeKind::While: {
     auto x = node->as<NdWhile>();
     ctx.loop_depth++;
-    if (x->vardef)
-      on_stmt(x->vardef, ctx);
-    if (x->cond)
-      on_expr(x->cond, ctx);
+    if (x->vardef) on_stmt(x->vardef, ctx);
+    if (x->cond) on_expr(x->cond, ctx);
     on_stmt(x->body, ctx);
     break;
   }
@@ -198,8 +184,7 @@ void NameResolver::on_stmt(Node* node, NdVisitorContext ctx) {
   }
   case NodeKind::Return: {
     auto x = node->as<NdReturn>();
-    if (x->expr)
-      on_expr(x->expr, ctx);
+    if (x->expr) on_expr(x->expr, ctx);
     break;
   }
   case NodeKind::Try: {
@@ -209,8 +194,7 @@ void NameResolver::on_stmt(Node* node, NdVisitorContext ctx) {
       on_typename(catch_->error_type, ctx);
       on_scope(catch_->body, ctx);
     }
-    if (x->finally_block)
-      on_scope(x->finally_block, ctx);
+    if (x->finally_block) on_scope(x->finally_block, ctx);
     break;
   }
   default:
@@ -236,8 +220,7 @@ void NameResolver::on_function(Node* node, NdVisitorContext ctx) {
   for (NdFuncArgument* arg : func->args)
     on_typename(arg->type, ctx);
 
-  if (func->result_type)
-    on_typename(func->result_type, ctx);
+  if (func->result_type) on_typename(func->result_type, ctx);
 
   on_scope(func->body, ctx);
 }

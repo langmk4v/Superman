@@ -117,7 +117,7 @@ struct SCScope : Scope {
 struct SCIf : Scope {
   Symbol* var = nullptr;
   SCScope* then_scope = nullptr;
-  SCScope* else_scope = nullptr;
+  Scope* else_scope = nullptr;
 
   SCIf(NdIf* node, Scope* parent);
   ~SCIf();

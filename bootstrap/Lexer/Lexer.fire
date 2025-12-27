@@ -40,7 +40,9 @@ namespace firec {
                     self.pos++;
                 }
 
-                return Token(kind: TokenKind::Integer(), text: self.source.data[pos: self.pos], location: loc);
+                var s = self.source.data[pos: self.pos];
+
+                return Token(kind: TokenKind::Integer(s.to_int()), text: s, location: loc);
             }
 
             // else if ...

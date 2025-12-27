@@ -69,15 +69,10 @@ NdGetTupleElement::~NdGetTupleElement() {
   if (expr) delete expr;
 }
 
-NdInclement::NdInclement(Token const& tok, Node* expr, bool is_postfix)
-    : Node(NodeKind::Inclement, tok), expr(expr), is_postfix(is_postfix) {}
-NdInclement::~NdInclement() {
-  if (expr) delete expr;
-}
-
-NdDeclement::NdDeclement(Token const& tok, Node* expr, bool is_postfix)
-    : Node(NodeKind::Declement, tok), expr(expr), is_postfix(is_postfix) {}
-NdDeclement::~NdDeclement() {
+NdInclementDeclement::NdInclementDeclement(NodeKind k, Token const& tok,
+                                           Node* expr, bool is_postfix)
+    : Node(k, tok), expr(expr), is_postfix(is_postfix) {}
+NdInclementDeclement::~NdInclementDeclement() {
   if (expr) delete expr;
 }
 

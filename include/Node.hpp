@@ -207,18 +207,12 @@ struct NdGetTupleElement : Node {
   ~NdGetTupleElement();
 };
 
-struct NdInclement : Node {
+struct NdInclementDeclement : Node {
   Node* expr = nullptr;
   bool is_postfix = false; // true: ++a, false: a++
-  NdInclement(Token const& tok, Node* expr, bool is_postfix);
-  ~NdInclement();
-};
-
-struct NdDeclement : Node {
-  Node* expr = nullptr;
-  bool is_postfix = false; // true: --a, false: a--
-  NdDeclement(Token const& tok, Node* expr, bool is_postfix);
-  ~NdDeclement();
+  NdInclementDeclement(NodeKind k, Token const& tok, Node* expr,
+                       bool is_postfix);
+  ~NdInclementDeclement();
 };
 
 struct NdOneExprWrap : Node {

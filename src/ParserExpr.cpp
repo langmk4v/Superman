@@ -239,10 +239,10 @@ Node* Parser::ps_subscript() {
   }
 
   if (eat(TokenPunctuators::Punct_Inclement))
-    return new NdInclement(tok, x, false);
+    return new NdInclementDeclement(NodeKind::Inclement, tok, x, false);
 
   if (eat(TokenPunctuators::Punct_Declement))
-    return new NdDeclement(tok, x, false);
+    return new NdInclementDeclement(NodeKind::Declement, tok, x, false);
 
   return x;
 }
@@ -251,10 +251,12 @@ Node* Parser::ps_unary() {
   auto& tok = *cur;
 
   if (eat(TokenPunctuators::Punct_Inclement))
-    return new NdInclement(tok, ps_subscript(), true);
+    return new NdInclementDeclement(NodeKind::Inclement, tok, ps_subscript(),
+                                    true);
 
   if (eat(TokenPunctuators::Punct_Declement))
-    return new NdDeclement(tok, ps_subscript(), true);
+    return new NdInclementDeclement(NodeKind::Declement, tok, ps_subscript(),
+                                    true);
 
   if (eat(TokenPunctuators::Punct_BitAnd))
     return new NdOneExprWrap(NodeKind::Ref, tok, ps_subscript());
