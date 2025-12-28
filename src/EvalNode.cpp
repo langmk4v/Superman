@@ -4,6 +4,7 @@
 
 #include "Utils.hpp"
 #include "Error.hpp"
+#include "BuiltinFunc.hpp"
 #include "EvalNode.hpp"
 
 namespace fire {
@@ -58,7 +59,21 @@ Object* NodeEvaluator::eval_expr(Node* node) {
     break;
   }
   case NodeKind::CallFunc: {
+    auto cf = node->as<NdCallFunc>();
+
+    std::vector<Object*> args;
+
+    for (auto a : cf->args)
+      args.push_back(this->eval_expr(a));
+
+    if (cf->builtin) {
+      return cf->builtin->impl(args);
+    }
+
+    assert(cf->func_nd);
+
     todo;
+
     break;
   }
   case NodeKind::GetTupleElement: {
@@ -97,10 +112,13 @@ Object* NodeEvaluator::eval_expr(Node* node) {
     todo;
   }
   }
+
   assert(node->is_expr());
+
   NdExpr* expr = node->as<NdExpr>();
   Object *lhs = this->eval_expr(expr->lhs), *rhs = this->eval_expr(expr->rhs);
   TypeKind lk = lhs->type.kind, rk = rhs->type.kind;
+
   switch (expr->kind) {
   case NodeKind::Add: {
     if (lk == TypeKind::Int) {
@@ -121,9 +139,11 @@ Object* NodeEvaluator::eval_expr(Node* node) {
     }
     todo;
   }
+
   case NodeKind::Sub: {
   }
   }
+
   stop;
 }
 

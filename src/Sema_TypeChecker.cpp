@@ -11,6 +11,8 @@
 #define PRINT_LOCATION(TOK) (err::e(TOK, "node").print())
 
 namespace fire {
+
+/*
 TypeChecker::ArgumentsCompareResult TypeChecker::compare_arguments(
     NdCallFunc* cf, NdFunction* fn, BuiltinFunc const* builtin, bool is_var_arg,
     bool is_method_call, TypeInfo& self_ty, std::vector<TypeInfo> const& defs,
@@ -90,6 +92,8 @@ TypeInfo TypeChecker::case_call_func(NdCallFunc* cf, NdVisitorContext ctx) {
           if (method->result_type)
             cf->ty = this->eval_typename_ty(method->result_type, ctx);
           cf->ty_evaluated = true;
+          cf->kind = NodeKind::CF_CallUserdefMethod;
+          cf->func_nd = method;
           return cf->ty;
         }
       }
@@ -113,6 +117,8 @@ TypeInfo TypeChecker::case_call_func(NdCallFunc* cf, NdVisitorContext ctx) {
           throw err::too_few_arguments(cf->args[cmp.mismatched_index]->token);
         }
         cf->ty = method->returning_self ? self_ty : method->result_type;
+        cf->builtin = method;
+        cf->kind = NodeKind::CF_CallBuiltinMethod;
         return cf->ty;
       }
     }
@@ -155,26 +161,39 @@ TypeInfo TypeChecker::case_call_func(NdCallFunc* cf, NdVisitorContext ctx) {
     }
     cf->ty = callee_ty;
     cf->ty_evaluated = true;
+    cf->kind = NodeKind::CF_MakeInstance;
+    cf->class_nd = nd_class;
     return cf->ty;
   }
+
   if (callee_ty.is(TypeKind::Enum))
     return case_construct_enumerator(cf, nd_en_def, callee_ty, argc_give,
                                      arg_types, ctx);
+
   if (callee_ty.kind != TypeKind::Function) {
     todo; // callee must be function
   }
+
   size_t argc_take = callee_ty.parameters.size() - 1;
+
   if (!callee_ty.is_var_arg_functor && argc_take < argc_give) {
     throw err::too_many_arguments(cf->args[argc_take]->token);
   } else if (argc_take > argc_give) {
     throw err::too_few_arguments(cf->args[argc_take]->token);
   }
+
   for (size_t i = 0; i < argc_take; i++) {
     if (!arg_types[i].equals(callee_ty.parameters[i + 1])) {
       todo; // argument type mismatch
     }
   }
+
   cf->ty = callee_ty.parameters[0];
+  cf->kind = NodeKind::CF_CallUserdefFn;
+
+  // 呼び出し先は変動可能のためここではポインタは設定しない。
+  // cf->func_nd = XXXX;
+
   return cf->ty;
 }
 
@@ -183,6 +202,243 @@ TypeInfo TypeChecker::case_method_call(NdCallFunc* cf, NdVisitorContext ctx) {
   (void)ctx;
   todo;
 }
+TypeInfo TypeChecker::case_construct_enumerator(
+    NdCallFunc* cf, NdEnumeratorDef* en_def, TypeInfo& callee_ty,
+    size_t argc_give, std::vector<TypeInfo>& arg_types, NdVisitorContext ctx) {
+  // no-variants
+  if (en_def->type == NdEnumeratorDef::NoVariants) {
+    err::emitters::enumerator_no_have_variants(cf->args[0]->token, en_def);
+  }
+  // one variant
+  else if (en_def->type == NdEnumeratorDef::OneType) {
+    if (argc_give == 0) {
+      err::emitters::expected_one_variant_for_enumerator(cf->token, en_def);
+    } else if (argc_give >= 2) {
+      err::emitters::too_many_variants_for_enumerator(cf->args[0]->token,
+                                                      en_def);
+    } else if (argc_give == 1) {
+      ctx = {};
+      if (!arg_types[0].equals(eval_expr_ty(en_def->variant, ctx))) {
+        throw err::mismatched_types(
+            cf->args[0]->token,
+            eval_typename_ty(en_def->variant, ctx).to_string(),
+            arg_types[0].to_string());
+      }
+    }
+  }
+  // multiple variants or struct fields
+  else if (en_def->type == NdEnumeratorDef::MultipleTypes ||
+           en_def->type == NdEnumeratorDef::StructFields) {
+    if (size_t count = en_def->multiple.size(); count > argc_give) {
+      err::emitters::too_few_variants_for_enumerator(cf->args[0]->token,
+                                                     en_def);
+    } else if (count < argc_give) {
+      err::emitters::too_many_variants_for_enumerator(cf->args[0]->token,
+                                                      en_def);
+    } else {
+      for (size_t i = 0; i < count; i++) {
+        auto expected_ty =
+            en_def->multiple[i]->is(NodeKind::Symbol)
+                ? eval_typename_ty(en_def->multiple[i]->as<NdSymbol>(), ctx)
+                : eval_typename_ty(en_def->multiple[i]
+                                       ->as<NdKeyValuePair>()
+                                       ->value->as<NdSymbol>(),
+                                   ctx);
+        if (!arg_types[i].equals(expected_ty)) {
+          throw err::mismatched_types(cf->args[i]->token,
+                                      expected_ty.to_string(),
+                                      arg_types[i].to_string());
+        }
+      }
+    }
+  }
+  return cf->ty = callee_ty;
+}
+*/
+
+TypeChecker::ArgumentsCompareResult
+TypeChecker::compare_arguments(NdCallFunc*, NdFunction*, BuiltinFunc const*,
+                               bool is_var_arg, bool, TypeInfo&,
+                               std::vector<TypeInfo> const& defs,
+                               std::vector<TypeInfo>& actual) {
+
+  ArgumentsCompareResult r{};
+
+  const size_t defc = defs.size();
+  const size_t actc = actual.size();
+
+  if (defc != actc) {
+    if (actc > defc) {
+      if (!is_var_arg) r.flags |= ArgumentsCompareResult::TooMany;
+    } else {
+      r.flags |= ArgumentsCompareResult::TooFew;
+    }
+  }
+
+  const size_t n = std::min(defc, actc);
+  for (size_t i = 0; i < n; ++i) {
+    const auto& d = defs[i];
+    if (d.kind != TypeKind::Any && !d.equals(actual[i])) {
+      r.flags |= ArgumentsCompareResult::TypeMismatch;
+      r.mismatched_index = i;
+      break;
+    }
+  }
+  return r;
+}
+
+TypeInfo TypeChecker::case_call_func(NdCallFunc* cf, NdVisitorContext ctx) {
+  std::vector<TypeInfo> arg_types;
+  arg_types.reserve(cf->args.size());
+
+  ctx.as_arg_of_callfunc = true;
+  for (auto& arg : cf->args)
+    arg_types.push_back(eval_expr_ty(arg, ctx));
+  ctx.as_arg_of_callfunc = false;
+
+  const size_t argc = arg_types.size();
+
+  NdEnumeratorDef* en_def = nullptr;
+  ctx.enumerator_node_out = &en_def;
+  ctx.as_callee_of_callfunc = true;
+  ctx.parent_cf_nd = cf;
+
+  /* ================== method call ================== */
+  if (cf->is_method_call) {
+    return case_method_call(cf, arg_types, ctx);
+  }
+
+  /* ================== normal call ================== */
+  TypeInfo callee_ty = eval_expr_ty(cf->callee, ctx);
+
+  /* constructor */
+  if (callee_ty.is(TypeKind::Class)) {
+    NdClass* cls = callee_ty.class_node;
+    if (argc != cls->fields.size())
+      throw err::e(cf->args[std::min(argc, cls->fields.size())]->token,
+                   (argc > cls->fields.size() ? "too many" : "too few") +
+                       std::string(" arguments for constructor of '") +
+                       callee_ty.to_string() + "'");
+
+    for (size_t i = 0; i < argc; ++i) {
+      auto* kv = cf->args[i]->as<NdKeyValuePair>();
+      if (!kv)
+        throw err::e(cf->args[i]->token,
+                     "expected field name in '" + callee_ty.to_string() + "'");
+
+      if (kv->key->token.text != cls->fields[i]->name.text)
+        throw err::e(kv->key->token, "field '" + kv->key->token.text +
+                                         "' is not found in '" +
+                                         callee_ty.to_string() + "'");
+
+      auto exp = eval_typename_ty(cls->fields[i]->type, ctx);
+      if (!arg_types[i].equals(exp))
+        throw err::mismatched_types(kv->value->token, exp.to_string(),
+                                    arg_types[i].to_string());
+    }
+
+    cf->ty = callee_ty;
+    cf->ty_evaluated = true;
+    cf->kind = NodeKind::CF_MakeInstance;
+    cf->class_nd = cls;
+    return cf->ty;
+  }
+
+  /* enum */
+  if (callee_ty.is(TypeKind::Enum))
+    return case_construct_enumerator(cf, en_def, callee_ty, argc, arg_types,
+                                     ctx);
+
+  assert(callee_ty.kind == TypeKind::Function);
+
+  /* function */
+
+  const size_t take = callee_ty.parameters.size() - 1;
+
+  if (!callee_ty.is_var_arg_functor && take != argc) {
+    if (argc > take)
+      throw err::too_many_arguments(cf->args[take]->token);
+    else
+      throw err::too_few_arguments(cf->args[take]->token);
+  }
+
+  for (size_t i = 0; i < take; ++i)
+    if (!arg_types[i].equals(callee_ty.parameters[i + 1])) todo;
+
+  cf->ty = callee_ty.parameters[0];
+  cf->kind = NodeKind::CF_CallUserdefFn;
+  return cf->ty;
+}
+
+TypeInfo TypeChecker::case_method_call(NdCallFunc* cf,
+                                       std::vector<TypeInfo>& arg_types,
+                                       NdVisitorContext ctx) {
+  TypeInfo self_ty = eval_expr_ty(cf->inst_expr, ctx);
+  ctx.self_ty_ptr = &self_ty;
+  const std::string& name = cf->callee->token.text;
+
+  /* user-defined method */
+  if (self_ty.is(TypeKind::Class)) {
+    for (NdFunction* m : self_ty.class_node->methods) {
+      if (m->name.text != name) continue;
+
+      std::vector<TypeInfo> defs;
+      defs.reserve(m->args.size());
+      for (auto a : m->args)
+        defs.push_back(eval_typename_ty(a->type, ctx));
+
+      auto cmp = compare_arguments(cf, m, nullptr, m->is_var_args, true,
+                                   self_ty, defs, arg_types);
+      if (cmp.flags) {
+        auto throw_err = [&](size_t i) {
+          if (cmp.flags & ArgumentsCompareResult::TypeMismatch)
+            throw err::mismatched_types(cf->args[i]->token, defs[i].to_string(),
+                                        arg_types[i].to_string());
+          if (cmp.flags & ArgumentsCompareResult::TooMany)
+            throw err::too_many_arguments(cf->args[i]->token);
+          if (cmp.flags & ArgumentsCompareResult::TooFew)
+            throw err::too_few_arguments(cf->args[i]->token);
+        };
+        throw_err(cmp.mismatched_index);
+      }
+
+      cf->ty =
+          m->result_type ? eval_typename_ty(m->result_type, ctx) : TypeInfo{};
+      cf->ty_evaluated = true;
+      cf->kind = NodeKind::CF_CallUserdefMethod;
+      cf->func_nd = m;
+      return cf->ty;
+    }
+  }
+
+  /* builtin method */
+  for (auto* bm : builtin_method_table) {
+    if (bm->name != name || bm->self_type.kind != self_ty.kind) continue;
+
+    auto cmp = compare_arguments(cf, nullptr, bm, bm->is_var_args, true,
+                                 self_ty, bm->arg_types, arg_types);
+    if (cmp.flags) {
+      const size_t i = cmp.mismatched_index;
+      if (cmp.flags & ArgumentsCompareResult::TypeMismatch)
+        throw err::mismatched_types(cf->args[i]->token,
+                                    bm->arg_types[i].to_string(),
+                                    arg_types[i].to_string());
+      if (cmp.flags & ArgumentsCompareResult::TooMany)
+        throw err::too_many_arguments(cf->args[i]->token);
+      if (cmp.flags & ArgumentsCompareResult::TooFew)
+        throw err::too_few_arguments(cf->args[i]->token);
+    }
+
+    cf->ty = bm->returning_self ? self_ty : bm->result_type;
+    cf->builtin = bm;
+    cf->kind = NodeKind::CF_CallBuiltinMethod;
+    return cf->ty;
+  }
+
+  throw err::e(cf->callee->token, "method '" + name + "' not found in '" +
+                                      self_ty.to_string() + "'");
+}
+
 TypeInfo TypeChecker::case_construct_enumerator(
     NdCallFunc* cf, NdEnumeratorDef* en_def, TypeInfo& callee_ty,
     size_t argc_give, std::vector<TypeInfo>& arg_types, NdVisitorContext ctx) {

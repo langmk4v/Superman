@@ -367,7 +367,9 @@ public:
                                            std::vector<TypeInfo>& actual);
 
   TypeInfo case_call_func(NdCallFunc* cf, NdVisitorContext ctx);
-  TypeInfo case_method_call(NdCallFunc* cf, NdVisitorContext ctx);
+
+  TypeInfo case_method_call(NdCallFunc* cf, std::vector<TypeInfo>& arg_types,
+                            NdVisitorContext ctx);
 
   TypeInfo case_construct_enumerator(NdCallFunc* cf, NdEnumeratorDef* en_def,
                                      TypeInfo& callee_ty, size_t argc_give,

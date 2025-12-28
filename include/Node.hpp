@@ -21,9 +21,18 @@ enum class NodeKind {
   Array,
   Tuple,
   Slice,
-  Subscript,       // a[b]
-  MemberAccess,    // a.b
-  CallFunc,        // a(...)
+  Subscript,    // a[b]
+  MemberAccess, // a.b
+
+  CallFunc, // a(...)
+
+  CF_CallBuiltin,
+  CF_CallBuiltinMethod,
+  CF_CallUserdefFn,
+  CF_CallUserdefMethod,
+  CF_MakeEnumerator,
+  CF_MakeInstance,
+
   GetTupleElement, // a.0, a.1, ...
   Inclement,       // ++a or a++
   Declement,       // --a or a--
@@ -41,7 +50,7 @@ enum class NodeKind {
   RShift,
   Bigger,        // a <  b
   BiggerOrEqual, // a <= b
-  
+
   Equal,
   // NotEqual --> replace to !(a==b)
 
@@ -87,6 +96,7 @@ enum class NodePlaceholders {
 };
 
 struct NdFunction;
+struct NdClass;
 //
 // in Sema
 struct Symbol;
@@ -195,6 +205,7 @@ struct NdCallFunc : Node {
   Node* inst_expr = nullptr; // 'a' of "a.f()"
   Node* self_obj() { return inst_expr; }
   NdFunction* func_nd = nullptr;
+  NdClass* class_nd = nullptr;
   BuiltinFunc const* builtin = nullptr;
   bool is_builtin() const { return !func_nd; }
   NdCallFunc(Node* callee, Token const& tok);

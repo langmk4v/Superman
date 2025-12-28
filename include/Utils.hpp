@@ -39,9 +39,9 @@
 #define todo todoimpl
 #define stop                                                                   \
   (fprintf(stderr,                                                             \
-           COL_RED "%.*c\n" COL_WHITE COL_BOLD                                 \
+           COL_RED "==================================\n" COL_WHITE COL_BOLD   \
                    "stopped at %s:%d\n" COL_DEFAULT,                           \
-           20, '#', __FILE__, __LINE__),                                       \
+           __FILE__, __LINE__),                                                \
    exit(10))
 
 #ifdef _FIRE_DEBUG_
