@@ -7,7 +7,7 @@
 #include "Object.hpp"
 #include "BuiltinFunc.hpp"
 
-#include "strconv.hpp"
+#include "utf.hpp"
 
 #define IMPL(name) Object* impl_##name(std::vector<Object*>& args)
 
@@ -62,7 +62,7 @@ IMPL(string_starts) {
 //
 IMPL(string_to_int) {
   ObjString* self = args[0]->as<ObjString>();
-  return new ObjInt(std::stoll(utf16_to_utf8_cpp(self->data.data())));
+  return new ObjInt(std::stoll(utf::utf16_to_utf8(self->data)));
 }
 
 //

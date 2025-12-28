@@ -89,25 +89,17 @@ struct ObjChar : Object {
 };
 
 struct ObjString : Object {
-  std::vector<char16_t> data;
+  std::u16string data;
 
   ObjString& append(ObjChar*);
   ObjString& append(ObjString*);
 
-  Object* clone() const override { return new ObjString(data); }
-
-  static ObjString* from_char16_ptr(char16_t* p) {
-    auto x = new ObjString();
-    for (; *p; p++)
-      x->data.push_back(*p);
-    return x;
-  }
+  Object* clone() const override { return new ObjString(this->data); }
 
   ObjString() : Object(TypeKind::String) {}
-  ObjString(std::vector<char16_t> const& s)
-      : Object(TypeKind::String), data(s) {}
-  ObjString(ObjChar* ch)
-      : Object(TypeKind::String), data(std::vector<char16_t>(1, ch->val)) {}
+
+  ObjString(std::u16string const& s) : Object(TypeKind::String), data(s) {}
+
   ~ObjString() {}
 };
 

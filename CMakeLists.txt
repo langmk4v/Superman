@@ -29,10 +29,9 @@ set(FIRE_HEADER_FILES
     include/Parser.hpp
     include/Sema.hpp
     include/SourceFile.hpp
-    include/strconv.hpp
-    include/string.hpp
     include/Token.hpp
     include/TypeInfo.hpp
+    include/utf.hpp
     include/Utils.hpp
     include/VM.hpp
 )
@@ -60,10 +59,10 @@ set(FIRE_SOURCE_FILES
   src/Sema_TypeChecker.cpp
   src/Sema.cpp
   src/SourceFile.cpp
-  src/strconv.cpp
-  src/string.cpp
   src/Token.cpp
   src/TypeInfo.cpp
+  src/utf.c
+  src/utf.cpp
   src/Utils.cpp
 )
 

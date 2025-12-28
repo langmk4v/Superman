@@ -41,8 +41,10 @@ enum class NodeKind {
   RShift,
   Bigger,        // a <  b
   BiggerOrEqual, // a <= b
+  
   Equal,
   // NotEqual --> replace to !(a==b)
+
   BitAnd,
   BitXor,
   BitOr,
@@ -379,8 +381,6 @@ struct NdClass : NdTemplatableBase {
   NdSymbol* base_class = nullptr;
   std::vector<NdFunction*> methods;
   std::vector<NdLet*> fields;
-  NdFunction* m_new = nullptr;
-  NdFunction* m_delete = nullptr;
   NdClass(Token const& tok, Token& name);
   ~NdClass();
 };

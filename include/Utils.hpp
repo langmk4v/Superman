@@ -91,8 +91,7 @@ std::string join(std::string const& sep, std::vector<T> const& v, F to_s) {
   std::string s;
   for (size_t i = 0; i < v.size(); i++) {
     s += to_s(v[i]);
-    if (i < v.size() - 1)
-      s += sep;
+    if (i < v.size() - 1) s += sep;
   }
   return s;
 }
@@ -102,8 +101,7 @@ static inline std::string join(std::string const& sep,
   std::string s;
   for (size_t i = 0; i < v.size(); i++) {
     s += v[i];
-    if (i < v.size() - 1)
-      s += sep;
+    if (i < v.size() - 1) s += sep;
   }
   return s;
 }

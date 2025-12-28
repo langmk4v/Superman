@@ -5,7 +5,7 @@
 #include "FSHelper.hpp"
 #include "Parser.hpp"
 #include "Utils.hpp"
-#include "strconv.hpp"
+#include "utf.hpp"
 
 namespace fire {
 
@@ -145,8 +145,7 @@ Node* Parser::ps_factor() {
     break;
 
   case TokenKind::Char: {
-    std::u16string s16 =
-        utf8_to_utf16_len_cpp(cur->text.data() + 1, cur->text.length() - 2);
+    std::u16string s16 = utf::utf8_to_utf16(cur->text);
     if (s16.empty() || s16.size() > 1)
       throw err::invalid_character_literal(*cur);
     v->obj = new ObjChar(s16[0]);
@@ -155,13 +154,7 @@ Node* Parser::ps_factor() {
   }
 
   case TokenKind::String: {
-    char16_t* tmp = utf8_to_utf16_with_len(nullptr, cur->text.data() + 1,
-                                           cur->text.length() - 2);
-
-    v->obj = ObjString::from_char16_ptr(tmp);
-
-    free(tmp);
-
+    v->obj = new ObjString(utf::utf8_to_utf16(cur->text));
     next();
     break;
   }

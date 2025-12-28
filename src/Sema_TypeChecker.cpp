@@ -235,19 +235,21 @@ TypeInfo TypeChecker::case_construct_enumerator(
   }
   return cf->ty = callee_ty;
 }
+
 TypeInfo TypeChecker::eval_expr_ty(Node* node, NdVisitorContext ctx) {
   ctx.node = node;
-  if (node->ty_evaluated) {
-    return node->ty;
-  }
+
+  if (node->ty_evaluated) return node->ty;
+
 #ifdef _FIRE_DEBUG_
-  // err::e(
-  //   node->token,
-  //   format("### eval_expr_ty node=%p (kind=%d) (ctx = {%s})",
-  //       node, static_cast<int>(node->kind),
-  //       NdVisitorContext::ctx2s(ctx).c_str()),
-  //   ET_Note).print();
+    // err::e(
+    //   node->token,
+    //   format("### eval_expr_ty node=%p (kind=%d) (ctx = {%s})",
+    //       node, static_cast<int>(node->kind),
+    //       NdVisitorContext::ctx2s(ctx).c_str()),
+    //   ET_Note).print();
 #endif
+
   switch (node->kind) {
   case NodeKind::Value:
     node->ty = node->as<NdValue>()->obj->type;
@@ -662,7 +664,7 @@ void TypeChecker::check_stmt(Node* node, NdVisitorContext ctx) {
     break;
   }
   default:
-    alertexpr(static_cast<int>(node->kind));
+    // alertexpr(static_cast<int>(node->kind));
     assert(node->is_expr_full());
     check_expr(node, ctx);
     break;
